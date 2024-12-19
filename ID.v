@@ -5,7 +5,7 @@ module ID(
     // input wire flush,
     input wire [`StallBus-1:0] stall,
     
-    output wire stallreq,
+    output wire stallreq, // 暂时不用
 
     input wire [`IF_TO_ID_WD-1:0] if_to_id_bus,
 
@@ -45,6 +45,7 @@ module ID(
     end
     
     assign inst = inst_sram_rdata; // ?????
+
     assign {
         ce,
         id_pc
@@ -54,7 +55,7 @@ module ID(
         wb_rf_we,
         wb_rf_waddr,
         wb_rf_wdata
-    } = wb_to_rf_bus;
+    } = wb_to_rf_bus; // 38 位
 
     wire [5:0] opcode;
     // sa（移位量）,逻辑左移（SLL）、逻辑右移（SRL）和算术右移（SRA）
@@ -85,6 +86,7 @@ module ID(
 
     wire [31:0] rdata1, rdata2;
 
+    // 模块例化，将括号外的顶层信号通过连线连接到括号内的模块端口
     regfile u_regfile(
     	.clk    (clk    ),
         .raddr1 (rs ),
@@ -95,7 +97,16 @@ module ID(
         .waddr  (wb_rf_waddr  ),
         .wdata  (wb_rf_wdata  )
     );
-
+    // ******************************************************
+    // 1` |opcode 6|rs    5|rt    5|rd    5|sa    5|func   6|
+    // 2` |opcode 6|rs    5|rt    5|offset                16|
+    // 3` |opcode 6|rs    5|rt    5|imm                   16|
+    // 4` |opcode 6|base  5|rt    5|rd    5|sa    5|func   6|
+    // 5` |opcode 6|base  5|rt    5|imm                   16|
+    // 6` |opcode 6|base  5|offset                        16|
+    // 7` |opcode 6|code                         20|func   6|
+    // 8` |opcode 6|instr_index                           26|
+    // ******************************************************
     assign opcode = inst[31:26];
     assign rs = inst[25:21];
     assign rt = inst[20:16];
@@ -109,12 +120,29 @@ module ID(
     assign offset = inst[15:0];
     assign sel = inst[2:0];
 
-    wire inst_ori, inst_addiu, inst_beq;
-    // 添加逻辑移动指令
-    wire inst_sll, inst_srl, inst_sra, inst_lui; // 参照sa
-    
 
-    // or, lui, add, 
+    wire inst_beq;
+    // TODO(添加指令)
+    // 算数运算指令
+    /*
+        当 opcode 为 6'b00_0000 时，func 用于进一步区分具体指令。
+        addiu: 将rs的值与有符号扩展至32位的立即数 imm 相加，写入rd
+        sub:   将rs的值与rt中的值相减写入rd
+        slt:   将rs的值与rt中的值进行有符号数比较,rs更小则rd=1，否则rd=0
+        sltu:  将rs的值与rt中的值进行无符号数比较
+    */
+    wire inst_addiu, inst_sub, inst_slt, inst_sltu;
+    
+    // 逻辑运算指令
+    wire inst_and, inst_nor, inst_ori, inst_xor;
+    
+    // 逻辑移动指令, 参照sa（移位位数）
+    /*
+        lui:将16位立即数imm写入rt的高16位，rt的低16位置0
+    */
+    wire inst_sll, inst_srl, inst_sra, inst_lui;
+
+
     wire op_add, op_sub, op_slt, op_sltu;
     wire op_and, op_nor, op_or, op_xor;
     wire op_sll, op_srl, op_sra, op_lui;
@@ -139,12 +167,29 @@ module ID(
         .out (rt_d )
     );
 
-    
-    assign inst_ori     = op_d[6'b00_1101];
-    assign inst_lui     = op_d[6'b00_1111];
-    assign inst_addiu   = op_d[6'b00_1001];
+    // TODO(添加指令)
     assign inst_beq     = op_d[6'b00_0100];
+    
+    // 算术运算指令
+    assign inst_addiu   = op_d[6'b00_1001];
+    assign inst_sub     = op_d[6'b00_0000];
+    assign inst_slt     = op_d[6'b00_0000]; 
+    assign inst_sltu    = op_d[6'b00_0000]; 
 
+    // 逻辑运算指令
+    assign inst_and     = op_d[6'b00_0000];
+    assign inst_nor     = op_d[6'b00_0000];
+    assign inst_xor     = op_d[6'b00_0000];
+    assign inst_ori     = op_d[6'b00_1101];
+
+    // 逻辑移动指令
+    /*
+        lui:将16位立即数imm写入rt的高16位，rt的低16位置0
+    */
+    assign inst_sll     = op_d[6'b00_0000];
+    assign inst_srl     = op_d[6'b00_0000];
+    assign inst_sra     = op_d[6'b00_0000];
+    assign inst_lui     = op_d[6'b00_1111];
 
 
     // rs to reg1
@@ -170,18 +215,18 @@ module ID(
     assign sel_alu_src2[3] = inst_ori;
 
 
-
+    // TODO(添加指令)
     assign op_add = inst_addiu;
-    assign op_sub = 1'b0;
-    assign op_slt = 1'b0;
-    assign op_sltu = 1'b0;
-    assign op_and = 1'b0;
-    assign op_nor = 1'b0;
+    assign op_sub = inst_sub;
+    assign op_slt = inst_slt;
+    assign op_sltu = inst_sltu;
+    assign op_and = inst_and;
+    assign op_nor = inst_nor;
     assign op_or = inst_ori;
-    assign op_xor = 1'b0;
-    assign op_sll = 1'b0;
-    assign op_srl = 1'b0;
-    assign op_sra = 1'b0;   
+    assign op_xor = inst_xor;
+    assign op_sll = inst_sll;
+    assign op_srl = inst_srl;
+    assign op_sra = inst_sra;   
     assign op_lui = inst_lui;
 
     assign alu_op = {op_add, op_sub, op_slt, op_sltu,
@@ -195,7 +240,6 @@ module ID(
 
     // write enable
     assign data_ram_wen = 1'b0;
-
 
 
     // regfile store enable
@@ -229,11 +273,13 @@ module ID(
         rf_we,          // 70
         rf_waddr,       // 69:65
 
-        /*  作用: 决定寄存器文件的写回数据来源。
+        /*  
+            sel_rf_res:
+                决定寄存器文件的写回数据来源
             用途:
-            在写回阶段选择不同的数据来源：
-            0：写回 ALU 的计算结果。
-            1：写回从数据存储器加载的数据（如 LW 指令）
+                在写回阶段选择不同的数据来源：
+                0：写回 ALU 的计算结果。
+                1：写回从数据存储器加载的数据（如 LW 指令）
         */
         sel_rf_res,     // 64
         rdata1,         // 63:32
