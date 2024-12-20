@@ -125,7 +125,7 @@ module ID(
     // TODO(添加指令)
     // 算数运算指令
     /*
-        当 opcode 为 6'b00_0000 时，func 用于进一步区分具体指令。
+        当 opcode 为 6'b00_0000 时，func 用于进一步区分具体指令
         addiu: 将rs的值与有符号扩展至32位的立即数 imm 相加，写入rd
         sub:   将rs的值与rt中的值相减写入rd
         slt:   将rs的值与rt中的值进行有符号数比较,rs更小则rd=1，否则rd=0
@@ -134,6 +134,12 @@ module ID(
     wire inst_addiu, inst_sub, inst_slt, inst_sltu;
     
     // 逻辑运算指令
+    /*
+        and: 将rs的值与rt的值进行逻辑与运算，写入rd
+        nor: 将rs的值与rt的值进行逻辑或运算，取反，写入rd
+        or:  将rs的值与rt的值进行逻辑或运算，写入rd
+        xor: 将rs的值与rt的值进行逻辑异或运算，写入rd
+    */
     wire inst_and, inst_nor, inst_ori, inst_xor;
     
     // 逻辑移动指令, 参照sa（移位位数）
@@ -191,8 +197,11 @@ module ID(
     assign inst_sra     = op_d[6'b00_0000];
     assign inst_lui     = op_d[6'b00_1111];
 
-
-    // rs to reg1
+    
+    // ALU 操作数来源
+    // **************************************************
+    // TODO(修改运算指令)
+    // rs to reg1   
     assign sel_alu_src1[0] = inst_ori | inst_addiu;
 
     // pc to reg1
@@ -213,6 +222,7 @@ module ID(
 
     // imm_zero_extend to reg2
     assign sel_alu_src2[3] = inst_ori;
+    // *************************************************
 
 
     // TODO(添加指令)
@@ -260,6 +270,14 @@ module ID(
                     | {5{sel_rf_dst[2]}} & 32'd31;
 
     // 0 from alu_res ; 1 from ld_res
+    /*  
+        sel_rf_res:
+                决定寄存器文件的写回数据来源
+            用途:
+                在写回阶段选择不同的数据来源：
+                0：写回 ALU 的计算结果。
+                1：写回从数据存储器加载的数据（如 LW 指令）
+    */
     assign sel_rf_res = 1'b0; 
 
     assign id_to_ex_bus = {
@@ -272,29 +290,22 @@ module ID(
         data_ram_wen,   // 74:71
         rf_we,          // 70
         rf_waddr,       // 69:65
-
-        /*  
-            sel_rf_res:
-                决定寄存器文件的写回数据来源
-            用途:
-                在写回阶段选择不同的数据来源：
-                0：写回 ALU 的计算结果。
-                1：写回从数据存储器加载的数据（如 LW 指令）
-        */
         sel_rf_res,     // 64
         rdata1,         // 63:32
         rdata2          // 31:0
     };
 
 
-    wire br_e;
-    wire [31:0] br_addr;
-    wire rs_eq_rt;
-    wire rs_ge_z;
-    wire rs_gt_z;
-    wire rs_le_z;
-    wire rs_lt_z;
-    wire [31:0] pc_plus_4;
+    wire br_e;              // 分支使能信号，表示是否发生分支跳转
+    wire [31:0] br_addr;    // 分支跳转的目标地址
+    wire rs_eq_rt;          // rs 是否 == rt 
+    wire rs_ge_z;           // rs 是否 >= 0
+    wire rs_gt_z;           // rs 是否  > 0
+    wire rs_le_z;           // rs 是否 <= 0
+    wire rs_lt_z;           // rs 是否  < 0
+    wire [31:0] pc_plus_4;  // 当前指令地址+4（即下一条指令的地址）
+
+
     assign pc_plus_4 = id_pc + 32'h4;
 
     assign rs_eq_rt = (rdata1 == rdata2);
