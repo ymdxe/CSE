@@ -6,6 +6,10 @@
 
 -连续赋值：是 Verilog 数据流建模的基本语句，用于对 wire 型变量进行赋值
 --assign 为关键词，任何已经声明 wire 变量的连续赋值语句都是以 assign 开头
+
+-Z（高阻态）
+-X（不确定状态）：
+--需要通过初始化、消除冲突等方式排查和解决。
 ****************************************************************************************
 */
 
@@ -30,10 +34,10 @@ module IF(
      主要与指令存储器进行交互
      控制从指令存储器中读取指令，或向寄存器中写入数据
     */
-    output wire inst_sram_en, // 存储器使能信号， 1 表示被使用
-    output wire [3:0] inst_sram_wen, // 指示是否写入数据以及写入哪些字节，一共四位，每一位表示存储器中的一个字节
-    output wire [31:0] inst_sram_addr, // 在取指阶段，将PC值通过此信号传给指令存储器获取指令
-    output wire [31:0] inst_sram_wdata // 写数据内容
+    output wire inst_sram_en,            // 存储器使能信号， 1 表示被使用
+    output wire [3:0] inst_sram_wen,     // 指示是否写入数据以及写入哪些字节，一共四位，每一位表示存储器中的一个字节
+    output wire [31:0] inst_sram_addr,   // 在取指阶段，将PC值通过此信号传给指令存储器获取指令
+    output wire [31:0] inst_sram_wdata   // 写数据内容
 );
     reg [31:0] pc_reg; 
     reg ce_reg; // 该值为 1 时，允许取指

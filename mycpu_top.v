@@ -8,7 +8,7 @@ module mycpu_top(
     output wire [3:0] inst_sram_wen,
     output wire [31:0] inst_sram_addr,
     output wire [31:0] inst_sram_wdata,
-    input wire [31:0] inst_sram_rdata,
+    input wire [31:0] inst_sram_rdata,   // 由外部指令存储器写入，无需在意具体怎么得到的
 
     output wire data_sram_en,
     output wire [3:0] data_sram_wen,

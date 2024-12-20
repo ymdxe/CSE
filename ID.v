@@ -5,19 +5,26 @@ module ID(
     // input wire flush,
     input wire [`StallBus-1:0] stall,
     
-    output wire stallreq, // 暂时不用
+    output wire stallreq,                   // 暂时不用
 
     input wire [`IF_TO_ID_WD-1:0] if_to_id_bus,
 
-    input wire [31:0] inst_sram_rdata,
+    input wire [31:0] inst_sram_rdata,      // 得到指令
 
     input wire [`WB_TO_RF_WD-1:0] wb_to_rf_bus,
+
+    // **********************************************
+    // TODO(1): 完成EX到ID连线，处理数据相关
+    input wire [`EX_TO_ID_WD-1:0] ex_to_id_bus,
+    // TODO(1): 完成MEM到ID连线，处理数据相关
+    input wire [`MEM_TO_ID_WD-1:0] mem_to_id_bus,
+    // **********************************************
 
     output wire [`ID_TO_EX_WD-1:0] id_to_ex_bus,
 
     output wire [`BR_WD-1:0] br_bus 
 );
-    // ****************************************************************
+
     // 接收 IF 段的数据
     reg [`IF_TO_ID_WD-1:0] if_to_id_bus_r; // 33
     wire [31:0] inst; // 32
@@ -86,17 +93,19 @@ module ID(
 
     wire [31:0] rdata1, rdata2;
 
+
     // 模块例化，将括号外的顶层信号通过连线连接到括号内的模块端口
     regfile u_regfile(
-    	.clk    (clk    ),
+    	.clk    (clk    ), 
         .raddr1 (rs ),
         .rdata1 (rdata1 ),
-        .raddr2 (rt ),
-        .rdata2 (rdata2 ),
+        .raddr2 (rt ),        
+        .rdata2 (rdata2 ),          // .rdata 为输出信号，从顶层模块返回到 ID 模块
         .we     (wb_rf_we     ),
         .waddr  (wb_rf_waddr  ),
         .wdata  (wb_rf_wdata  )
     );
+
     // ******************************************************
     // 1` |opcode 6|rs    5|rt    5|rd    5|sa    5|func   6|
     // 2` |opcode 6|rs    5|rt    5|offset                16|
@@ -107,22 +116,64 @@ module ID(
     // 7` |opcode 6|code                         20|func   6|
     // 8` |opcode 6|instr_index                           26|
     // ******************************************************
+
+
     assign opcode = inst[31:26];
     assign rs = inst[25:21];
     assign rt = inst[20:16];
     assign rd = inst[15:11];
     assign sa = inst[10:6];
     assign func = inst[5:0];
-    assign imm = inst[15:0];
+    assign imm = inst[15:0];    
     assign instr_index = inst[25:0];
     assign code = inst[25:6];
     assign base = inst[25:21];
     assign offset = inst[15:0];
     assign sel = inst[2:0];
 
+    // ******************************************************
+    // TODO(1): 完成EX到ID连线以及MEM到ID连线，处理数据相关
+    wire ex_rf_we;
+    wire [4:0] ex_rf_waddr;
+    wire [31:0] ex_rf_wdata;
+
+    wire mem_rf_we;
+    wire [4:0] mem_rf_waddr;
+    wire [31:0] mem_rf_wdata;
+
+    wire [31:0] tdata1, tdata2; // 临时数据
+
+    assign {
+        ex_rf_we,
+        ex_rf_waddr,
+        ex_rf_wdata
+    } = ex_to_id_bus;
+
+    assign {
+        mem_rf_we,
+        mem_rf_waddr,
+        mem_rf_wdata
+    } = mem_to_id_bus;
+
+    
+    assign tdata1 = 
+                ((ex_rf_we && (ex_rf_waddr == rs)) ? ex_rf_wdata : 32'b0)      | 
+                ((mem_rf_we && (mem_rf_waddr == rs)) ? mem_rf_wdata : 32'b0)   |
+                ((ex_rf_we && (ex_rf_waddr == rs)) || (mem_rf_we && (mem_rf_waddr == rs)) ? 32'b0 : rdata1);
+
+    assign tdata2 = 
+                ((ex_rf_we && (ex_rf_waddr == rt)) ? ex_rf_wdata : 32'b0)      | 
+                ((mem_rf_we && (mem_rf_waddr == rt)) ? mem_rf_wdata : 32'b0)   |
+                ((ex_rf_we && (ex_rf_waddr == rt)) || (mem_rf_we && (mem_rf_waddr == rt)) ? 32'b0 : rdata2);
+
+    assign rdata1 = tdata1;
+    assign rdata2 = tdata2;
+    // 处理数据相关
+    // ******************************************************
+
 
     wire inst_beq;
-    // TODO(添加指令)
+    // TODO (0): 添加运算指令
     // 算数运算指令
     /*
         当 opcode 为 6'b00_0000 时，func 用于进一步区分具体指令
@@ -173,7 +224,7 @@ module ID(
         .out (rt_d )
     );
 
-    // TODO(添加指令)
+    // TODO(0): 添加运算指令
     assign inst_beq     = op_d[6'b00_0100];
     
     // 算术运算指令
@@ -200,7 +251,7 @@ module ID(
     
     // ALU 操作数来源
     // **************************************************
-    // TODO(修改运算指令)
+    // TODO(?): 修改 ALU 
     // rs to reg1   
     assign sel_alu_src1[0] = inst_ori | inst_addiu;
 
@@ -225,7 +276,7 @@ module ID(
     // *************************************************
 
 
-    // TODO(添加指令)
+    // TODO(0): 添加运算指令
     assign op_add = inst_addiu;
     assign op_sub = inst_sub;
     assign op_slt = inst_slt;
@@ -233,6 +284,7 @@ module ID(
     assign op_and = inst_and;
     assign op_nor = inst_nor;
     assign op_or = inst_ori;
+    // assign op_or = 1'd1; // debug1
     assign op_xor = inst_xor;
     assign op_sll = inst_sll;
     assign op_srl = inst_srl;
@@ -256,7 +308,7 @@ module ID(
     assign rf_we = inst_ori | inst_lui | inst_addiu;
 
 
-
+    // TODO (?): 寄存器选择问题
     // store in [rd]
     assign sel_rf_dst[0] = 1'b0;
     // store in [rt] 
@@ -280,6 +332,8 @@ module ID(
     */
     assign sel_rf_res = 1'b0; 
 
+
+    // 将data数据进行修改，防止出现X态
     assign id_to_ex_bus = {
         id_pc,          // 158:127
         inst,           // 126:95
@@ -291,7 +345,7 @@ module ID(
         rf_we,          // 70
         rf_waddr,       // 69:65
         sel_rf_res,     // 64
-        rdata1,         // 63:32
+        rdata1,         // 63:32  
         rdata2          // 31:0
     };
 

@@ -6,6 +6,10 @@ module MEM(
     input wire [`StallBus-1:0] stall,
 
     input wire [`EX_TO_MEM_WD-1:0] ex_to_mem_bus,
+
+    //TODO (1): 完成MEM到ID连线，处理数据相关
+    output wire [`MEM_TO_ID_WD-1:0] mem_to_id_bus,
+
     input wire [31:0] data_sram_rdata,
 
     output wire [`MEM_TO_WB_WD-1:0] mem_to_wb_bus
@@ -51,6 +55,7 @@ module MEM(
 
 
     assign rf_wdata = sel_rf_res ? mem_result : ex_result;
+    // assign rf_wdata = ex_result; // debug1
 
     assign mem_to_wb_bus = {
         mem_pc,     // 69:38
@@ -59,6 +64,12 @@ module MEM(
         rf_wdata    // 31:0
     };
 
+    // TODO(1): 完成MEM到ID连线，处理数据相关
+    assign mem_to_id_bus = {
+        rf_we,     
+        rf_waddr,   
+        rf_wdata  
+    };
 
 
 

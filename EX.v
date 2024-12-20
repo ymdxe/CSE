@@ -8,8 +8,8 @@ module EX(
     input wire [`ID_TO_EX_WD-1:0] id_to_ex_bus,
 
     output wire [`EX_TO_MEM_WD-1:0] ex_to_mem_bus,
-
-    output wire [`EX_TO_ID_WD-1:0] ex_to_id_bus,  //数据冒险
+    // TODO (1): 处理数据相关
+    output wire [`EX_TO_ID_WD-1:0] ex_to_id_bus, // 处理数据相关
 
     output wire data_sram_en,
     output wire [3:0] data_sram_wen,
@@ -84,16 +84,30 @@ module EX(
     );
 
     assign ex_result = alu_result;
+    
+    // *****************************************************
+    // TODO (1): 连接至 ID
+    // 写回寄存器
+    // 将是否写回寄存器、写回寄存器地址、写回寄存器数据送到 ID 段
+    assign ex_to_id_bus = {
+        rf_we,
+        rf_waddr,
+        ex_result
+    }; // 38 位
+
+    // *****************************************************
+    // WB_TO_ID part
 
     assign ex_to_mem_bus = {
         ex_pc,          // 75:44
         data_ram_en,    // 43
         data_ram_wen,   // 42:39
         sel_rf_res,     // 38
-        rf_we,          // 37
-        rf_waddr,       // 36:32
-        ex_result       // 31:0
+        rf_we,          // 37       是否写回寄存器
+        rf_waddr,       // 36:32    写回寄存器地址
+        ex_result       // 31:0     ALU计算结果
     };
+
 
     // MUL part
     wire [63:0] mul_result;
