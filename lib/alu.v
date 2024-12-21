@@ -6,7 +6,7 @@ module alu(
     output wire [31:0] alu_result
 );
 
-    // TODO(添加运算)
+    // TODO(0): 添加运算
     wire op_add;
     wire op_sub;
     wire op_slt;

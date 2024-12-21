@@ -113,12 +113,16 @@ module EX(
     wire [63:0] mul_result;
     wire mul_signed; // 有符号乘法标记
 
+    // TODO (0): 增加乘法源操作数
+    wire [31:0] mul_opdata1, mul_opdata2;
+
+
     mul u_mul(
     	.clk        (clk            ),
         .resetn     (~rst           ),
         .mul_signed (mul_signed     ),
-        .ina        (      ), // 乘法源操作数1
-        .inb        (      ), // 乘法源操作数2
+        .ina        (mul_opdata1    ), // 乘法源操作数1
+        .inb        (mul_opdata2    ), // 乘法源操作数2
         .result     (mul_result     ) // 乘法结果 64bit
     );
 
