@@ -6,7 +6,6 @@ module alu(
     output wire [31:0] alu_result
 );
 
-    // TODO(0): 添加运算
     wire op_add;
     wire op_sub;
     wire op_slt;
@@ -65,7 +64,7 @@ module alu(
     assign sll_result = alu_src2 << alu_src1[4:0];
     assign srl_result = alu_src2 >> alu_src1[4:0];
     assign sra_result = ($signed(alu_src2)) >>> alu_src1[4:0];
-
+    
     assign alu_result = ({32{op_add|op_sub  }} & add_sub_result)
                       | ({32{op_slt         }} & slt_result)
                       | ({32{op_sltu        }} & sltu_result)
@@ -77,5 +76,8 @@ module alu(
                       | ({32{op_srl         }} & srl_result)
                       | ({32{op_sra         }} & sra_result)
                       | ({32{op_lui         }} & lui_result);
+    // always @(*) begin
+    //     $display("time : %0t, add_res = %h, src1 = %h, src2 = %h", $time, add_sub_result, alu_src1, alu_src2);
+    // end
                       
 endmodule

@@ -61,6 +61,25 @@ module EX(
         rf_rdata2          // 31:0
     } = id_to_ex_bus_r;
 
+    wire [3:0] byte_sel;
+    wire [3:0] data_ram_sel;
+
+    // decoder_2_4 u0_decoder_2_4(
+    //     .in     (ex_result[1:0]   ),
+    //     .out    (byte_sel         )
+    // );
+
+    // 更改sram信息
+    // assign data_ram_sel = inst_sb | inst_lb | inst_lbu ? byte_sel :
+    //                     inst_sh | inst_lh | inst_lhu ?  {{2{byte_sel[2]}},{2{byte_sel[0]}}} :
+    //                     inst_sw | inst_lw ? 4'b1111 : 4'b0000;
+    // assign data_sram_en = data_ram_en;
+    // assign data_sram_wen = {4{data_ram_en}} & data_ram_sel;
+    // assign data_sram_addr = ex_result;
+    // assign data_sram_wdata = inst_sb ? {4{rf_rdata2[7:0]}} :
+    //                         inst_sh ? {2{rf_rdata2[15:0]}} :
+    //                         inst_sw ? rf_rdata2 : 32'b0;
+
     wire [31:0] imm_sign_extend, imm_zero_extend, sa_zero_extend;
     assign imm_sign_extend = {{16{inst[15]}},inst[15:0]};
     assign imm_zero_extend = {16'b0, inst[15:0]};
@@ -76,6 +95,10 @@ module EX(
                       sel_alu_src2[2] ? 32'd8 :
                       sel_alu_src2[3] ? imm_zero_extend : rf_rdata2;
     
+    // always @ (*) begin
+    //    $display("time : %0t, rdata1 = %h, rdata2 = %h", $time, rf_rdata1, rf_rdata2);
+    // end
+
     alu u_alu(
     	.alu_control (alu_op ),
         .alu_src1    (alu_src1    ),
@@ -107,6 +130,7 @@ module EX(
         rf_waddr,       // 36:32    写回寄存器地址
         ex_result       // 31:0     ALU计算结果
     };
+
 
 
     // MUL part

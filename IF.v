@@ -68,9 +68,9 @@ module IF(
             ce_reg <= 1'b1;
         end
     end
-    always @(posedge clk) begin
-        $display("time : %0t, brbus = %h, if_to_id_bus = %h", $time, br_bus, if_to_id_bus);
-    end
+    // always @(posedge clk) begin
+    //     $display("time : %0t, brbus = %h, if_to_id_bus = %h", $time, br_bus, if_to_id_bus);
+    // end
 
     assign next_pc = br_e ? br_addr 
                    : pc_reg + 32'h4;
