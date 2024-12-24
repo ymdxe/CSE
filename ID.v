@@ -14,11 +14,16 @@ module ID(
     input wire [`WB_TO_RF_WD-1:0] wb_to_rf_bus,
 
     // **********************************************
-    // TODO(1): 完成EX到ID连线，处理数据相关
+    // TODO(1): 完成 EX、MEX 到ID连线，处理数据相关
     input wire [`EX_TO_ID_WD-1:0] ex_to_id_bus,
-    // TODO(1): 完成MEM到ID连线，处理数据相关
     input wire [`MEM_TO_ID_WD-1:0] mem_to_id_bus,
+    // **********************************************^
+
     // **********************************************
+    // TODO(2): 增加处理内存连线
+    output wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_data,
+    output wire [`STORE_SRAM_DATA_WD-1:0] store_sram_data,
+    // **********************************************^
 
     output wire [`ID_TO_EX_WD-1:0] id_to_ex_bus,
 
@@ -133,9 +138,10 @@ module ID(
     // assign rdata1 = tdata1;
     // assign rdata2 = tdata2;
     // 处理数据相关
-    // ******************************************************
+    // ******************************************************^
 
     // 模块例化，将括号外的顶层信号通过连线连接到括号内的模块端口
+
     regfile u_regfile(
     	.clk    (clk    ), 
         .raddr1 (rs ),
@@ -146,6 +152,7 @@ module ID(
         .waddr  (wb_rf_waddr  ),
         .wdata  (wb_rf_wdata  )
     );
+    
 
     // ******************************************************
     // 1` |opcode 6|rs    5|rt    5|rd    5|sa    5|func   6|
@@ -241,9 +248,8 @@ module ID(
         .out (rt_d )
     );
 
+    // ****************************************************************
     // TODO(0): 添加运算指令
-
-    
     // 算术运算指令
     assign inst_add     = op_d[6'b00_0000] & func_d[6'b10_0000];
     assign inst_addu    = op_d[6'b00_0000] & func_d[6'b10_0001];
@@ -313,9 +319,27 @@ module ID(
     assign inst_swl     = op_d[6'b10_1010];
     assign inst_swr     = op_d[6'b10_1110];
 
+    // ******************************************************^
 
+    // **********************************************************
+    // TODO (2): 内存数据传送
+    assign load_sram_data = {
+        inst_lb,
+        inst_lh,
+        inst_lw,
+        inst_lbu,
+        inst_lhu
+    };
+
+    assign store_sram_data = {
+        inst_sb,
+        inst_sh,
+        inst_sw
+    };
+    // **********************************************************^
+
+    // ***********************************************************
     // ALU 操作数来源
-    // **************************************************
     // TODO(?): 修改 ALU 
     // rs to reg1   
     assign sel_alu_src1[0] = inst_ori   | inst_addiu | inst_and 
@@ -364,8 +388,9 @@ module ID(
     // imm_zero_extend to reg2
     assign sel_alu_src2[3] = inst_ori | inst_andi | inst_xori;
 
+    // ***********************************************************^
 
-    // *************************************************
+
     // TODO(0): 添加运算指令
     assign op_add = inst_addiu | inst_add | inst_addu | inst_addi | inst_jal | inst_lw | inst_sw;
     assign op_sub = inst_sub | inst_subu;
@@ -389,7 +414,7 @@ module ID(
 
     // load and store enable
     assign data_ram_en = inst_lb | inst_lbu | inst_lh | inst_lhu | inst_lw
-                        ;
+                          | inst_sb | inst_sh | inst_sw;
 
     // write enable
     // assign data_ram_wen = ( inst_sb ? 4'b0001 :      // sb: 写1个字节
@@ -397,6 +422,9 @@ module ID(
     //                         inst_sw ? 4'b1111 :  // sw: 写4个字节
     //                         4'b0000);            // 默认不写
     assign data_ram_wen = inst_sw ? 4'b1111 : 4'b0000;
+    // assign data_ram_sel = inst_sb | inst_lb | inst_lbu ? byte_sel :
+    //                     inst_sh | inst_lh | inst_lhu ?  {{2{byte_sel[2]}},{2{byte_sel[0]}}} :
+    //                     inst_sw | inst_lw ? 4'b1111 : 4'b0000;
 
     // regfile store enable
     assign rf_we = inst_ori | inst_lui | inst_addiu

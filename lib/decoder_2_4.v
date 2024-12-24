@@ -1,3 +1,4 @@
+`include "defines.vh"
 module decoder_2_4 (
     input wire [1:0] in,
     output reg [3:0] out

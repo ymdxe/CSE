@@ -6,8 +6,10 @@
 `define DATA_SRAM_WD 69
 
 `define WB_TO_RF_WD 38 
-`define EX_TO_ID_WD 38 //增加EX_to_RF，处理数据相关
-`define MEM_TO_ID_WD 38 //增加MEM_to_RF，处理数据相关
+`define EX_TO_ID_WD 38               //增加EX_to_RF，处理数据相关
+`define MEM_TO_ID_WD 38              //增加MEM_to_RF，处理数据相关
+`define LOAD_SRAM_DATA_WD 5          // 增加LOAD_SRAM_DATA_WD，进行内存操作
+`define STORE_SRAM_DATA_WD 3         // 增加STORE_SRAM_DATA_WD，进行内存操作
 
 `define StallBus 6
 `define NoStop 1'b0

@@ -1,4 +1,5 @@
 {
+TODO (1)
 -id_to_ex_bus 在模拟波形中的后八位出现X态
 --根据16进制指令，找到id_to_ex_bus后8位对应rdata2
 ---rdata2未初始化，在regfile.v中的rdata值是输出线，将当前模块返回到顶层模块中（这里是ID段）
@@ -17,8 +18,19 @@
 ---在ID段中继续参考WB段进行数据的接收，接下来应该处理对数据的处理，解决数据相关问题
 ----判断在EX，MEM，WB 段中是否出现和当前ID段需要访问的寄存器地址相等的情况，同时增加临时变量tdata1(2)，若有数据相关问题，赋值给tdata，代替rdata
 
+TODO (2)
 -继续添加部分指令，此时遇到 lw，sw 读写内存数据有问题
 --应当增加 EX、MEM 中有关sram的功能
+---这里的指令按照流水线一级一级传递，在每个周期内同步指令，应采用时序逻辑
+
+-ID 段将指令传递给 EX 段
+--EX 段接收，计算内存相关的操作:
+---data_sram_wdata 传给顶层模块写入内存
+---data_sram_addr  传给顶层模块写入内存
+---data_sram_wen   传给顶层模块写入内存
+---data_sram_en    传给顶层模块写入内存
+---data_ram_sel    只在EX 段中出现，MEM 段中的data_ram_sel未定义,但是功能和data_ram_wen相同,在EX 段中将data_ram_wen同步为data_sram_wen
+----由上分析，MEM 段似乎不需要增加其他连线,只需增加ID -> EX 间的关于读写内存指令的操作即可
 
 }
 
