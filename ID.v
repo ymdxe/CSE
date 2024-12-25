@@ -21,8 +21,8 @@ module ID(
 
     // **********************************************
     // TODO(2): 增加处理内存连线
-    output wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_data,
-    output wire [`STORE_SRAM_DATA_WD-1:0] store_sram_data,
+    output wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_id_data,
+    output wire [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data,
     // **********************************************^
 
     output wire [`ID_TO_EX_WD-1:0] id_to_ex_bus,
@@ -82,7 +82,7 @@ module ID(
         end
     end
     
-    assign inst = inst_sram_rdata; // ?????
+    assign inst = inst_sram_rdata; // 从内存中取出的指令
 
     assign {
         ce,
@@ -323,7 +323,7 @@ module ID(
 
     // **********************************************************
     // TODO (2): 内存数据传送
-    assign load_sram_data = {
+    assign load_sram_id_data = {
         inst_lb,
         inst_lh,
         inst_lw,
@@ -331,7 +331,7 @@ module ID(
         inst_lhu
     };
 
-    assign store_sram_data = {
+    assign store_sram_id_data = {
         inst_sb,
         inst_sh,
         inst_sw
@@ -474,7 +474,10 @@ module ID(
                 0：写回 ALU 的计算结果。
                 1：写回从数据存储器加载的数据（如 LW 指令）
     */
-    assign sel_rf_res = inst_lw;
+    assign sel_rf_res = inst_lw | inst_lb | inst_lbu | inst_lh
+                        | inst_lhu | inst_sw | inst_sb | inst_sh
+                         ? 1'b1 : 1'b0;
+
                     //     (inst_lb | inst_lbu | inst_lh | inst_lhu | inst_lw | inst_jal) ? 1'b1 : 
                     //     1'b0; 
 

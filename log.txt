@@ -31,6 +31,10 @@ TODO (2)
 ---data_sram_en    传给顶层模块写入内存
 ---data_ram_sel    只在EX 段中出现，MEM 段中的data_ram_sel未定义,但是功能和data_ram_wen相同,在EX 段中将data_ram_wen同步为data_sram_wen
 ----由上分析，MEM 段似乎不需要增加其他连线,只需增加ID -> EX 间的关于读写内存指令的操作即可
+-----通过一个点
+
+-EX 段中的data_ram_en和data_ram_wen 出现 X 态
+
 
 }
 

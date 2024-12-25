@@ -31,8 +31,10 @@ module mycpu_core(
     wire [`StallBus-1:0] stall;
     wire [`EX_TO_ID_WD-1:0] ex_to_id_bus;   // *
     wire [`MEM_TO_ID_WD-1:0] mem_to_id_bus; // *
-    wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_data;
-    wire [`STORE_SRAM_DATA_WD-1:0] store_sram_data;
+    wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_id_data;
+    wire [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data;
+    wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_wb_data;
+    wire [`STORE_SRAM_DATA_WD-1:0] store_sram_wb_data;
 
     IF u_IF(
     	.clk             (clk             ),
@@ -48,46 +50,48 @@ module mycpu_core(
     
 
     ID u_ID(
-    	.clk             (clk             ),
-        .rst             (rst             ),
-        .stall           (stall           ),
-        .stallreq        (stallreq        ),
-        .if_to_id_bus    (if_to_id_bus    ),
-        .inst_sram_rdata (inst_sram_rdata ),
-        .wb_to_rf_bus    (wb_to_rf_bus    ),
-        .ex_to_id_bus    (ex_to_id_bus    ), // *
-        .mem_to_id_bus   (mem_to_id_bus   ), // *
-        .load_sram_data  (load_sram_data  ),
-        .store_sram_data (store_sram_data ),
-        .id_to_ex_bus    (id_to_ex_bus    ),
-        .br_bus          (br_bus          )
+    	.clk                (clk             ),
+        .rst                (rst             ),
+        .stall              (stall           ),
+        .stallreq           (stallreq        ),
+        .if_to_id_bus       (if_to_id_bus    ),
+        .inst_sram_rdata    (inst_sram_rdata ),
+        .wb_to_rf_bus       (wb_to_rf_bus    ),
+        .ex_to_id_bus       (ex_to_id_bus    ), // *
+        .mem_to_id_bus      (mem_to_id_bus   ), // *
+        .load_sram_id_data  (load_sram_id_data  ), //
+        .store_sram_id_data (store_sram_id_data ), //
+        .id_to_ex_bus       (id_to_ex_bus    ),
+        .br_bus             (br_bus          )
     );
 
     EX u_EX(
-    	.clk             (clk             ),
-        .rst             (rst             ),
-        .stall           (stall           ),
-        .id_to_ex_bus    (id_to_ex_bus    ),
-        .ex_to_mem_bus   (ex_to_mem_bus   ),
-        .ex_to_id_bus    (ex_to_id_bus    ), // *
-        .load_sram_data  (load_sram_data  ),
-        .store_sram_data (store_sram_data ),
-        .data_sram_en    (data_sram_en    ),
-        .data_sram_wen   (data_sram_wen   ),
-        .data_sram_addr  (data_sram_addr  ),
-        .data_sram_wdata (data_sram_wdata )
+    	.clk                (clk             ),
+        .rst                (rst             ),
+        .stall              (stall           ),
+        .id_to_ex_bus       (id_to_ex_bus    ),
+        .ex_to_mem_bus      (ex_to_mem_bus   ),
+        .ex_to_id_bus       (ex_to_id_bus    ), // *
+        .load_sram_id_data     (load_sram_id_data  ), //
+        .store_sram_id_data    (store_sram_id_data ), //
+        .load_sram_wb_data  (load_sram_wb_data  ), //
+        .store_sram_wb_data (store_sram_wb_data ),  //
+        .data_sram_en       (data_sram_en    ),
+        .data_sram_wen      (data_sram_wen   ),
+        .data_sram_addr     (data_sram_addr  ),
+        .data_sram_wdata    (data_sram_wdata )
     );
 
     MEM u_MEM(
-    	.clk             (clk             ),
-        .rst             (rst             ),
-        .stall           (stall           ),
-        .ex_to_mem_bus   (ex_to_mem_bus   ),
-        .mem_to_id_bus   (mem_to_id_bus   ), // *
-        .load_sram_data  (load_sram_data  ),
-        .store_sram_data (store_sram_data ),
-        .data_sram_rdata (data_sram_rdata ),
-        .mem_to_wb_bus   (mem_to_wb_bus   )
+    	.clk                (clk             ),
+        .rst                (rst             ),
+        .stall              (stall           ),
+        .ex_to_mem_bus      (ex_to_mem_bus   ),
+        .mem_to_id_bus      (mem_to_id_bus   ), // *
+        .load_sram_wb_data  (load_sram_wb_data  ), //
+        .store_sram_wb_data (store_sram_wb_data ), //
+        .data_sram_rdata    (data_sram_rdata ),
+        .mem_to_wb_bus      (mem_to_wb_bus   )
     );
     
     WB u_WB(

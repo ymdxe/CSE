@@ -16,7 +16,7 @@ module WB(
 );
 
     reg [`MEM_TO_WB_WD-1:0] mem_to_wb_bus_r;
-
+    
     always @ (posedge clk) begin
         if (rst) begin
             mem_to_wb_bus_r <= `MEM_TO_WB_WD'b0;

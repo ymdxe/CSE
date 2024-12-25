@@ -12,8 +12,11 @@ module EX(
     output wire [`EX_TO_ID_WD-1:0] ex_to_id_bus,        // 处理数据相关
 
     // TODO (2): 内存相关
-    input wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_data,
-    input wire [`STORE_SRAM_DATA_WD-1:0] store_sram_data,
+    input wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_id_data,
+    input wire [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data,
+
+    output wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_wb_data,
+    output wire [`STORE_SRAM_DATA_WD-1:0] store_sram_wb_data,
 
     output wire data_sram_en,
     output wire [3:0] data_sram_wen,
@@ -98,24 +101,24 @@ module EX(
         .out    (byte_sel         )
     );
 
-    reg [`LOAD_SRAM_DATA_WD-1:0] load_sram_data_r;
-    reg [`STORE_SRAM_DATA_WD-1:0] store_sram_data_r;    
+    reg [`LOAD_SRAM_DATA_WD-1:0] load_sram_id_data_r;
+    reg [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data_r;    
 
     always @ (posedge clk) begin
         if (rst) begin
-            load_sram_data_r <= `LOAD_SRAM_DATA_WD'b0;
-            store_sram_data_r <= `STORE_SRAM_DATA_WD'b0;
+            load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
+            store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
         end
         // else if (flush) begin
         //     id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
         // end
         else if (stall[2]==`Stop && stall[3]==`NoStop) begin
-            load_sram_data_r <= `LOAD_SRAM_DATA_WD'b0;
-            store_sram_data_r <= `STORE_SRAM_DATA_WD'b0;
+            load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
+            store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
         end
         else if (stall[2]==`NoStop) begin
-            load_sram_data_r <= load_sram_data;
-            store_sram_data_r <= store_sram_data;
+            load_sram_id_data_r <= load_sram_id_data;
+            store_sram_id_data_r <= store_sram_id_data;
         end
     end
 
@@ -126,7 +129,7 @@ module EX(
         inst_sb,
         inst_sh,
         inst_sw
-    } = store_sram_data_r;
+    } = store_sram_id_data_r;
 
     assign {
         inst_lb,
@@ -134,7 +137,7 @@ module EX(
         inst_lw,
         inst_lbu,
         inst_lhu
-    } = load_sram_data_r;
+    } = load_sram_id_data_r;
 
 
     assign data_ram_sel = inst_sb | inst_lb | inst_lbu ? byte_sel :
@@ -146,6 +149,20 @@ module EX(
     assign data_sram_wdata = inst_sb ? {4{rf_rdata2[7:0]}} :        // 字节
                              inst_sh ? {2{rf_rdata2[15:0]}} :       // 半字
                              inst_sw ? rf_rdata2 : 32'b0;           // 字
+
+    assign load_sram_wb_data = {
+        inst_lb,
+        inst_lh,
+        inst_lw,
+        inst_lbu,
+        inst_lhu
+    };
+
+    assign store_sram_wb_data = {
+        inst_sb,
+        inst_sh,
+        inst_sw
+    };
     // ********************************************************************************************^    
 
     alu u_alu(
@@ -171,6 +188,9 @@ module EX(
     // *****************************************************^
 
     assign data_ram_wen = data_sram_wen;
+    // always @ (posedge clk) begin
+    //     $display("data_sram_wen = %h", data_sram_wen);
+    // end
 
     assign ex_to_mem_bus = {
         ex_pc,          // 75:44
