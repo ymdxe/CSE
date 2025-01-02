@@ -102,9 +102,9 @@ module MEM(
     wire [15:0] h_data;
     wire [31:0] w_data;
 
-    always @ (posedge clk) begin
-        $display("data_ram_en = %h, data_ram_wen = %h", data_ram_en, data_ram_wen);
-    end
+    // always @ (posedge clk) begin
+    //     $display("data_ram_en = %h, data_ram_wen = %h", data_ram_en, data_ram_wen);
+    // end
 
     assign b_data = data_ram_wen[3] ? data_sram_rdata[31:24] : 
                     data_ram_wen[2] ? data_sram_rdata[23:16] :
@@ -120,11 +120,12 @@ module MEM(
                         inst_lhu ? {{16{1'b0}},h_data} :
                         inst_lw ? w_data : 32'b0; 
 
-    assign mem_result = data_ram_en ? data_sram_rdata : 32'b0;
-
+    // assign mem_result = data_ram_en ? data_sram_rdata : 32'b0;
+    
     // *******************************************************************^
 
-    assign rf_wdata = sel_rf_res ? mem_result : ex_result;
+    // assign rf_wdata = sel_rf_res ? mem_result : ex_result;
+    assign rf_wdata = sel_rf_res & data_ram_en ? mem_result : ex_result;
     // always @ (posedge clk) begin
     //     $display("data_ram_en = %h, data_sram_rdata = %h, rf_wdata = %h", data_ram_en, data_sram_rdata, rf_wdata);
     // end

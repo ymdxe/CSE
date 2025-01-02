@@ -65,7 +65,7 @@ module ID(
         mem_rf_wdata
     } = mem_to_id_bus;
 
-    // **********************************************************
+    // **********************************************************^
 
     always @ (posedge clk) begin
         if (rst) begin
@@ -79,6 +79,9 @@ module ID(
         end
         else if (stall[1]==`NoStop) begin
             if_to_id_bus_r <= if_to_id_bus;
+        end
+        else begin
+            if_to_id_bus_r <= `IF_TO_ID_WD'b0;
         end
     end
     

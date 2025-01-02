@@ -29,12 +29,14 @@ module mycpu_core(
     wire [`DATA_SRAM_WD-1:0] ex_dt_sram_bus;
     wire [`WB_TO_RF_WD-1:0] wb_to_rf_bus;
     wire [`StallBus-1:0] stall;
+
     wire [`EX_TO_ID_WD-1:0] ex_to_id_bus;   // *
     wire [`MEM_TO_ID_WD-1:0] mem_to_id_bus; // *
     wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_id_data;
     wire [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data;
     wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_wb_data;
     wire [`STORE_SRAM_DATA_WD-1:0] store_sram_wb_data;
+    wire stallreq_for_load;
 
     IF u_IF(
     	.clk             (clk             ),
@@ -66,20 +68,21 @@ module mycpu_core(
     );
 
     EX u_EX(
-    	.clk                (clk             ),
-        .rst                (rst             ),
-        .stall              (stall           ),
-        .id_to_ex_bus       (id_to_ex_bus    ),
-        .ex_to_mem_bus      (ex_to_mem_bus   ),
-        .ex_to_id_bus       (ex_to_id_bus    ), // *
-        .load_sram_id_data     (load_sram_id_data  ), //
-        .store_sram_id_data    (store_sram_id_data ), //
-        .load_sram_wb_data  (load_sram_wb_data  ), //
-        .store_sram_wb_data (store_sram_wb_data ),  //
-        .data_sram_en       (data_sram_en    ),
-        .data_sram_wen      (data_sram_wen   ),
-        .data_sram_addr     (data_sram_addr  ),
-        .data_sram_wdata    (data_sram_wdata )
+    	.clk                    (clk             ),
+        .rst                    (rst             ),
+        .stall                  (stall           ),
+        .id_to_ex_bus           (id_to_ex_bus    ),
+        .ex_to_mem_bus          (ex_to_mem_bus   ),
+        .ex_to_id_bus           (ex_to_id_bus    ), // *
+        .load_sram_id_data      (load_sram_id_data  ), //
+        .store_sram_id_data     (store_sram_id_data ), //
+        .load_sram_wb_data      (load_sram_wb_data  ), //
+        .store_sram_wb_data     (store_sram_wb_data ),  //
+        .stallreq_for_load      (stallreq_for_load), // 添加load暂停
+        .data_sram_en           (data_sram_en    ),
+        .data_sram_wen          (data_sram_wen   ),
+        .data_sram_addr         (data_sram_addr  ),
+        .data_sram_wdata        (data_sram_wdata )
     );
 
     MEM u_MEM(
@@ -108,6 +111,7 @@ module mycpu_core(
 
     CTRL u_CTRL(
     	.rst   (rst   ),
+        .stallreq_for_load (stallreq_for_load),
         .stall (stall )
     );
     
