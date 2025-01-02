@@ -318,7 +318,7 @@ module ID(
     // 跳转指令
     assign inst_jr      = op_d[6'b00_0000] & func_d[6'b00_1000];
     assign inst_jalr    = op_d[6'b00_0000] & func_d[6'b00_1001];
-    assign inst_j       = op_d[6'b00_0100];
+    assign inst_j       = op_d[6'b00_0010];
     assign inst_jal     = op_d[6'b00_0011];
 
     // 分支指令
@@ -539,7 +539,7 @@ module ID(
 
     assign br_e = (inst_beq & rs_eq_rt) ||
               inst_jr ||
-            //   inst_jalr ||
+              inst_j ||
               inst_jal ||
               (inst_bne & ~rs_eq_rt);
 
@@ -547,7 +547,7 @@ module ID(
                  inst_jr  ? tdata1 :
                  inst_jal ? {pc_plus_4[31:28], instr_index, 2'b0} :
                  inst_bne ? (pc_plus_4 + {{14{inst[15]}}, inst[15:0], 2'b0}) : 
-                //  inst_jalr ? tdata1 :
+                 inst_j ?  ({ pc_plus_4[31:28], inst[25:0], 2'b0}) :
                     32'b0;
 
     // always @(posedge clk) begin
