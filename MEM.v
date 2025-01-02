@@ -11,8 +11,8 @@ module MEM(
     output wire [`MEM_TO_ID_WD-1:0] mem_to_id_bus,
 
     // TODO (2): 内存相关
-    input wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_wb_data,
-    input wire [`STORE_SRAM_DATA_WD-1:0] store_sram_wb_data,
+    input wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_ex_data,
+    input wire [`STORE_SRAM_DATA_WD-1:0] store_sram_ex_data,
 
     input wire [31:0] data_sram_rdata,
 
@@ -20,19 +20,27 @@ module MEM(
 );
 
     reg [`EX_TO_MEM_WD-1:0] ex_to_mem_bus_r;
+    reg [`LOAD_SRAM_DATA_WD-1:0] load_sram_ex_data_r;
+    reg [`STORE_SRAM_DATA_WD-1:0] store_sram_ex_data_r;  
 
     always @ (posedge clk) begin
         if (rst) begin
             ex_to_mem_bus_r <= `EX_TO_MEM_WD'b0;
+            // load_sram_ex_data_r <= `LOAD_SRAM_DATA_WD'b0;
+            // store_sram_ex_data_r <= `STORE_SRAM_DATA_WD'b0;
         end
         // else if (flush) begin
         //     ex_to_mem_bus_r <= `EX_TO_MEM_WD'b0;
         // end
         else if (stall[3]==`Stop && stall[4]==`NoStop) begin
             ex_to_mem_bus_r <= `EX_TO_MEM_WD'b0;
+            // load_sram_ex_data_r <= `LOAD_SRAM_DATA_WD'b0;
+            // store_sram_ex_data_r <= `STORE_SRAM_DATA_WD'b0;
         end
         else if (stall[3]==`NoStop) begin
             ex_to_mem_bus_r <= ex_to_mem_bus;
+            // load_sram_ex_data_r <= load_sram_ex_data;
+            // store_sram_ex_data_r <= store_sram_ex_data;
         end
     end
 
@@ -60,26 +68,26 @@ module MEM(
     // *******************************************************************
     // TODO (2): 完成数据存储器的读写操作
 
-    reg [`LOAD_SRAM_DATA_WD-1:0] load_sram_wb_data_r;
-    reg [`STORE_SRAM_DATA_WD-1:0] store_sram_wb_data_r;    
+    // reg [`LOAD_SRAM_DATA_WD-1:0] load_sram_ex_data_r;
+    // reg [`STORE_SRAM_DATA_WD-1:0] store_sram_ex_data_r;    
 
-    always @ (posedge clk) begin
-        if (rst) begin
-            load_sram_wb_data_r <= `LOAD_SRAM_DATA_WD'b0;
-            store_sram_wb_data_r <= `STORE_SRAM_DATA_WD'b0;
-        end
-        // else if (flush) begin
-        //     id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
-        // end
-        else if (stall[2]==`Stop && stall[3]==`NoStop) begin
-            load_sram_wb_data_r <= `LOAD_SRAM_DATA_WD'b0;
-            store_sram_wb_data_r <= `STORE_SRAM_DATA_WD'b0;
-        end
-        else if (stall[2]==`NoStop) begin
-            load_sram_wb_data_r <= load_sram_wb_data;
-            store_sram_wb_data_r <= store_sram_wb_data;
-        end
-    end
+    // always @ (posedge clk) begin
+    //     if (rst) begin
+    //         load_sram_ex_data_r <= `LOAD_SRAM_DATA_WD'b0;
+    //         store_sram_ex_data_r <= `STORE_SRAM_DATA_WD'b0;
+    //     end
+    //     // else if (flush) begin
+    //     //     id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
+    //     // end
+    //     else if (stall[2]==`Stop && stall[3]==`NoStop) begin
+    //         load_sram_ex_data_r <= `LOAD_SRAM_DATA_WD'b0;
+    //         store_sram_ex_data_r <= `STORE_SRAM_DATA_WD'b0;
+    //     end
+    //     else if (stall[2]==`NoStop) begin
+    //         load_sram_ex_data_r <= load_sram_ex_data;
+    //         store_sram_ex_data_r <= store_sram_ex_data;
+    //     end
+    // end
 
     wire inst_sb, inst_sh, inst_sw;
     wire inst_lb, inst_lh, inst_lw, inst_lbu, inst_lhu;
@@ -88,7 +96,7 @@ module MEM(
         inst_sb,
         inst_sh,
         inst_sw
-    } = store_sram_wb_data_r;
+    } = store_sram_ex_data_r;
 
     assign {
         inst_lb,
@@ -96,7 +104,7 @@ module MEM(
         inst_lw,
         inst_lbu,
         inst_lhu
-    } = load_sram_wb_data_r;
+    } = load_sram_ex_data_r;
 
     wire [7:0]  b_data;
     wire [15:0] h_data;
@@ -121,14 +129,13 @@ module MEM(
                         inst_lw ? w_data : 32'b0; 
 
     // assign mem_result = data_ram_en ? data_sram_rdata : 32'b0;
-    
     // *******************************************************************^
 
     // assign rf_wdata = sel_rf_res ? mem_result : ex_result;
     assign rf_wdata = sel_rf_res & data_ram_en ? mem_result : ex_result;
-    // always @ (posedge clk) begin
-    //     $display("data_ram_en = %h, data_sram_rdata = %h, rf_wdata = %h", data_ram_en, data_sram_rdata, rf_wdata);
-    // end
+    always @ (posedge clk) begin
+        $display("rf_wdata = %h, mem_result = %h, inst_lw = %h, w_data = %h", rf_wdata, mem_result,inst_lw, w_data);
+    end
 
     assign mem_to_wb_bus = {
         mem_pc,     // 69:38

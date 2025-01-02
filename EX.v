@@ -14,8 +14,8 @@ module EX(
     // TODO (2): 内存相关, 将有关内存操作传到MEM，对具体的内存操作位数进行处理
     input wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_id_data,
     input wire [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data,
-    output wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_wb_data,
-    output wire [`STORE_SRAM_DATA_WD-1:0] store_sram_wb_data,
+    output wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_ex_data,
+    output wire [`STORE_SRAM_DATA_WD-1:0] store_sram_ex_data,
     output wire stallreq_for_load, // 用于load暂停请求
 
     output wire data_sram_en,
@@ -24,6 +24,9 @@ module EX(
     output wire [31:0] data_sram_wdata
 );
 
+    reg [`LOAD_SRAM_DATA_WD-1:0] load_sram_id_data_r;
+    reg [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data_r;    
+
     // ? 为什么在上升沿的时候赋值，而不是定义成wire类型在顶层模块进行赋值
     //  如果直接用 wire，信号在组合逻辑的传播过程中可能会产生毛刺（瞬态的高低电平波动），导致下一级电路误触发
     reg [`ID_TO_EX_WD-1:0] id_to_ex_bus_r;    
@@ -31,16 +34,22 @@ module EX(
     always @ (posedge clk) begin
         if (rst) begin
             id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
+            load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
+            store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
         end
         // else if (flush) begin
         //     id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
         // end
         else if (stall[2]==`Stop && stall[3]==`NoStop) begin
             id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
+            load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
+            store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
 
         end
         else if (stall[2]==`NoStop) begin
             id_to_ex_bus_r <= id_to_ex_bus;
+            load_sram_id_data_r <= load_sram_id_data;
+            store_sram_id_data_r <= store_sram_id_data;
         end
     end
 
@@ -173,7 +182,7 @@ module EX(
                              inst_sh ? {2{rf_rdata2[15:0]}} :       // 半字
                              inst_sw ? rf_rdata2 : 32'b0;           // 字
 
-    assign load_sram_wb_data = {
+    assign load_sram_ex_data = {
         inst_lb,
         inst_lh,
         inst_lw,
@@ -181,7 +190,7 @@ module EX(
         inst_lhu
     };
 
-    assign store_sram_wb_data = {
+    assign store_sram_ex_data = {
         inst_sb,
         inst_sh,
         inst_sw

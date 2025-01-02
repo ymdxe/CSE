@@ -34,8 +34,8 @@ module mycpu_core(
     wire [`MEM_TO_ID_WD-1:0] mem_to_id_bus; // *
     wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_id_data;
     wire [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data;
-    wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_wb_data;
-    wire [`STORE_SRAM_DATA_WD-1:0] store_sram_wb_data;
+    wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_ex_data;
+    wire [`STORE_SRAM_DATA_WD-1:0] store_sram_ex_data;
     wire stallreq_for_load;
 
     IF u_IF(
@@ -76,8 +76,8 @@ module mycpu_core(
         .ex_to_id_bus           (ex_to_id_bus    ), // *
         .load_sram_id_data      (load_sram_id_data  ), //
         .store_sram_id_data     (store_sram_id_data ), //
-        .load_sram_wb_data      (load_sram_wb_data  ), //
-        .store_sram_wb_data     (store_sram_wb_data ),  //
+        .load_sram_ex_data      (load_sram_ex_data  ), //
+        .store_sram_ex_data     (store_sram_ex_data ),  //
         .stallreq_for_load      (stallreq_for_load), // 添加load暂停
         .data_sram_en           (data_sram_en    ),
         .data_sram_wen          (data_sram_wen   ),
@@ -91,8 +91,8 @@ module mycpu_core(
         .stall              (stall           ),
         .ex_to_mem_bus      (ex_to_mem_bus   ),
         .mem_to_id_bus      (mem_to_id_bus   ), // *
-        .load_sram_wb_data  (load_sram_wb_data  ), //
-        .store_sram_wb_data (store_sram_wb_data ), //
+        .load_sram_ex_data  (load_sram_ex_data  ), //
+        .store_sram_ex_data (store_sram_ex_data ), //
         .data_sram_rdata    (data_sram_rdata ),
         .mem_to_wb_bus      (mem_to_wb_bus   )
     );
