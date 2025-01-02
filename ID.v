@@ -25,6 +25,10 @@ module ID(
     output wire [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data,
     // **********************************************^
 
+    // 处理load相关
+    input wire ex_find_load,
+    output wire stallreq_for_load,
+
     output wire [`ID_TO_EX_WD-1:0] id_to_ex_bus,
 
     output wire [`BR_WD-1:0] br_bus 
@@ -67,25 +71,38 @@ module ID(
 
     // **********************************************************^
 
+    reg [31:0] slot;
+    reg is_slot;
+    
     always @ (posedge clk) begin
         if (rst) begin
-            if_to_id_bus_r <= `IF_TO_ID_WD'b0;        
+            if_to_id_bus_r <= `IF_TO_ID_WD'b0;  
+            is_slot <= 1'b0;    
+            slot <= 32'b0;  
         end
         // else if (flush) begin
         //     ic_to_id_bus <= `IC_TO_ID_WD'b0;
         // end
         else if (stall[1]==`Stop && stall[2]==`NoStop) begin
             if_to_id_bus_r <= `IF_TO_ID_WD'b0;
+            is_slot <= 1'b1;
+            slot <= if_to_id_bus;
         end
         else if (stall[1]==`NoStop) begin
             if_to_id_bus_r <= if_to_id_bus;
+            is_slot <= 1'b0;
+            slot <= 32'b0;
+        end
+        else if (stall[2:1] == 2'b11) begin
+            slot <= inst_sram_rdata;
+            is_slot <= 1'b1;
         end
         else begin
             if_to_id_bus_r <= `IF_TO_ID_WD'b0;
         end
     end
     
-    assign inst = inst_sram_rdata; // 从内存中取出的指令
+    assign inst = is_slot ? slot : inst_sram_rdata; // 从内存中取出的指令
 
     assign {
         ce,
@@ -128,20 +145,26 @@ module ID(
 
     // ******************************************************
     // TODO(1): 完成EX到ID连线以及MEM到ID连线，处理数据相关
-    assign tdata1 = ((ex_rf_we && rs == ex_rf_waddr) ? ex_rf_wdata : 32'b0) | 
-                   ((mem_rf_we && rs == mem_rf_waddr) ? mem_rf_wdata : 32'b0) |
-                   ((wb_rf_we && rs == wb_rf_waddr) ? wb_rf_wdata : 32'b0) |
-                   (((ex_rf_we && rs == ex_rf_waddr) || (mem_rf_we && rs == mem_rf_waddr) || (wb_rf_we && rs == wb_rf_waddr)) ? 32'b0 : rdata1);
-    assign tdata2 = ((ex_rf_we && rt == ex_rf_waddr) ? ex_rf_wdata : 32'b0) | 
-                   ((mem_rf_we && rt == mem_rf_waddr) ? mem_rf_wdata : 32'b0) |
-                   ((wb_rf_we && rt == wb_rf_waddr) ? wb_rf_wdata : 32'b0) |
-                   (((ex_rf_we && rt == ex_rf_waddr) || (mem_rf_we && rt == mem_rf_waddr) || (wb_rf_we && rt == wb_rf_waddr)) ? 32'b0 : rdata2);
+    assign tdata1 = (ex_rf_we && rs == ex_rf_waddr) ? ex_rf_wdata :
+                    (mem_rf_we && rs == mem_rf_waddr) ? mem_rf_wdata :
+                    (wb_rf_we && rs == wb_rf_waddr) ? wb_rf_wdata :
+                    (rdata1 == 32'b0) ? 32'b0 :
+                    rdata1;
 
+    assign tdata2 = (ex_rf_we && rt == ex_rf_waddr) ? ex_rf_wdata :
+                    (mem_rf_we && rt == mem_rf_waddr) ? mem_rf_wdata :
+                    (wb_rf_we && rt == wb_rf_waddr) ? wb_rf_wdata :
+                    (rdata2 == 32'b0) ? 32'b0 :
+                    rdata2;
+ 
     // 寄存器中没有值, data应为X态
     // assign rdata1 = tdata1;
     // assign rdata2 = tdata2;
     // 处理数据相关
     // ******************************************************^
+
+    // TODO(2): 处理load相关
+    assign stallreq_for_load = (ex_find_load && ex_rf_we) && (rs == ex_rf_waddr || rt == ex_rf_waddr) ? 1'b1 : 1'b0;   
 
     // 模块例化，将括号外的顶层信号通过连线连接到括号内的模块端口
 
@@ -328,10 +351,10 @@ module ID(
     // TODO (2): 内存数据传送
     assign load_sram_id_data = {
         inst_lb,
-        inst_lh,
-        inst_lw,
         inst_lbu,
-        inst_lhu
+        inst_lh,
+        inst_lhu,
+        inst_lw
     };
 
     assign store_sram_id_data = {

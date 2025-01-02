@@ -16,7 +16,11 @@ module EX(
     input wire [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data,
     output wire [`LOAD_SRAM_DATA_WD-1:0] load_sram_ex_data,
     output wire [`STORE_SRAM_DATA_WD-1:0] store_sram_ex_data,
-    output wire stallreq_for_load, // 用于load暂停请求
+
+    output wire ex_find_load, // 用于load暂停请求
+
+    // TODO (3): 处理load相关
+    output wire [3:0] data_ram_sel, // 选择写入内存的字节
 
     output wire data_sram_en,
     output wire [3:0] data_sram_wen,
@@ -114,7 +118,7 @@ module EX(
     // ********************************************************************************************
     // TODO (2): 更改sram信息
     wire [3:0] byte_sel;
-    wire [3:0] data_ram_sel; // 选择写入内存的字节
+    // wire [3:0] data_ram_sel; // 选择写入内存的字节
 
     decoder_2_4 u0_decoder_2_4(
         .in     (ex_result[1:0]   ),
@@ -124,23 +128,23 @@ module EX(
     reg [`LOAD_SRAM_DATA_WD-1:0] load_sram_id_data_r;
     reg [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data_r;    
 
-    always @ (posedge clk) begin
-        if (rst) begin
-            load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
-            store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
-        end
-        // else if (flush) begin
-        //     id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
-        // end
-        else if (stall[2]==`Stop && stall[3]==`NoStop) begin
-            load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
-            store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
-        end
-        else if (stall[2]==`NoStop) begin
-            load_sram_id_data_r <= load_sram_id_data;
-            store_sram_id_data_r <= store_sram_id_data;
-        end
-    end
+    // always @ (posedge clk) begin
+    //     if (rst) begin
+    //         load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
+    //         store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
+    //     end
+    //     // else if (flush) begin
+    //     //     id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
+    //     // end
+    //     else if (stall[2]==`Stop && stall[3]==`NoStop) begin
+    //         load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
+    //         store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
+    //     end
+    //     else if (stall[2]==`NoStop) begin
+    //         load_sram_id_data_r <= load_sram_id_data;
+    //         store_sram_id_data_r <= store_sram_id_data;
+    //     end
+    // end
 
     wire inst_sb, inst_sh, inst_sw;
     wire inst_lb, inst_lh, inst_lw, inst_lbu, inst_lhu;
@@ -153,22 +157,22 @@ module EX(
 
     assign {
         inst_lb,
-        inst_lh,
-        inst_lw,
         inst_lbu,
-        inst_lhu
+        inst_lh,
+        inst_lhu,
+        inst_lw
     } = load_sram_id_data_r;
 
     // TODO (2): 进行暂停处理
     // assign stall[2] = inst_lb | inst_lh | inst_lw | inst_lbu | inst_lhu ? `Stop : `NoStop;
-    assign stallreq_for_load = inst_lb | inst_lh | inst_lw | inst_lbu | inst_lhu ? `Stop : `NoStop;
-    // assign stallreq_for_load = sel_rf_res;
+    // assign ex_find_load = (inst_lb | inst_lh | inst_lw | inst_lbu | inst_lhu) ? `Stop : `NoStop;
+    assign ex_find_load = sel_rf_res;
 
     assign data_ram_sel = inst_sb | inst_lb | inst_lbu ? byte_sel :
                           inst_sh | inst_lh | inst_lhu ?  {{2{byte_sel[2]}},{2{byte_sel[0]}}} :
                           inst_sw | inst_lw ? 4'b1111 : 4'b0000;
     assign data_sram_en = data_ram_en;
-    // assign data_sram_wen = {{data_ram_wen}} & data_ram_sel; 有坑
+    // assign data_sram_wen = {{data_ram_wen}} & data_ram_sel;
     assign data_sram_wen = inst_sw ? 4'b1111:
                     inst_sb & alu_result[1:0]==2'b00 ? 4'b0001:
                     inst_sb & alu_result[1:0]==2'b01 ? 4'b0010:
@@ -184,10 +188,10 @@ module EX(
 
     assign load_sram_ex_data = {
         inst_lb,
-        inst_lh,
-        inst_lw,
         inst_lbu,
-        inst_lhu
+        inst_lh,
+        inst_lhu,
+        inst_lw
     };
 
     assign store_sram_ex_data = {

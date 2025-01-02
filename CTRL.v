@@ -20,7 +20,7 @@ module CTRL(
         if (rst) begin
             stall = `StallBus'b0;
         end
-        else if (stallreq_for_load == `Stop) begin
+        else if (stallreq_for_load) begin
             stall = `StallBus'b00_0111; // 将译码往前阶段都进行暂停
         end
         else begin
