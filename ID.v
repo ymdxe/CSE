@@ -80,29 +80,25 @@ module ID(
             is_slot <= 1'b0;    
             slot <= 32'b0;  
         end
-        // else if (flush) begin
-        //     ic_to_id_bus <= `IC_TO_ID_WD'b0;
-        // end
         else if (stall[1]==`Stop && stall[2]==`NoStop) begin
             if_to_id_bus_r <= `IF_TO_ID_WD'b0;
-            is_slot <= 1'b1;
-            slot <= if_to_id_bus;
+            is_slot <= 1'b0;
         end
         else if (stall[1]==`NoStop) begin
             if_to_id_bus_r <= if_to_id_bus;
             is_slot <= 1'b0;
-            slot <= 32'b0;
+            // slot <= 32'b0;
         end
-        else if (stall[2:1] == 2'b11) begin
-            slot <= inst_sram_rdata;
+        else if ((stall[2:1] == 2'b11) && (is_slot == 1'b0)) begin
             is_slot <= 1'b1;
+            slot <= inst_sram_rdata;
         end
-        else begin
-            if_to_id_bus_r <= `IF_TO_ID_WD'b0;
-        end
+        // else begin
+        //     if_to_id_bus_r <= `IF_TO_ID_WD'b0;
+        // end
     end
     
-    assign inst = is_slot ? slot : inst_sram_rdata; // 从内存中取出的指令
+    assign inst = ce ? is_slot ? slot : inst_sram_rdata : 32'b0; // 从内存中取出的指令
 
     assign {
         ce,
@@ -208,6 +204,7 @@ module ID(
 
 
     // TODO (0): 添加运算指令
+    // TODO (3): hi, lo 寄存器
     // 算数运算指令
     wire inst_add, inst_addi, inst_addiu, inst_addu, inst_sub, inst_subu;
     wire inst_slt, inst_slti, inst_sltiu, inst_sltu, inst_mul, inst_mult, inst_multu;
@@ -239,7 +236,7 @@ module ID(
         // 跳转指令
     wire inst_jr, inst_jalr, inst_j, inst_jal;
         // 分支指令
-    wire inst_b, inst_bal, inst_beq, inst_bgez, inst_bgezal;
+    wire inst_bal, inst_beq, inst_bgez, inst_bgezal;
     wire inst_bgtz, inst_blez, inst_bltz, inst_bltzal, inst_bne;
         // 跳转指令
     
@@ -374,7 +371,7 @@ module ID(
                             | inst_srlv | inst_srav  | inst_add
                             | inst_addu | inst_sub   | inst_subu
                             | inst_slt   | inst_sltu | inst_addi
-                            | inst_addiu | inst_slti | inst_sltiu
+                            | inst_slti | inst_sltiu
                             | inst_mul  | inst_mult  | inst_multu
                             | inst_mthi | inst_mtlo  | inst_jr
                             | inst_jalr | inst_lb | inst_lbu
@@ -396,8 +393,8 @@ module ID(
                             | inst_sra | inst_sllv | inst_srlv
                             | inst_srav | inst_add | inst_addu 
                             | inst_sub   | inst_subu | inst_slt
-                            | inst_sltu | inst_addiu
-                            | inst_slti | inst_sltiu | inst_mul
+                            | inst_sltu 
+                            | inst_mul
                             | inst_mult | inst_multu
                             // | inst_nop
                             ;
@@ -461,10 +458,10 @@ module ID(
                     | inst_and | inst_nor | inst_or
                     | inst_xor | inst_sll | inst_srl
                     | inst_sra | inst_sllv | inst_srlv
-                    | inst_srav /*| inst_nop*/ | inst_mfhi
+                    | inst_srav | inst_mfhi
                     | inst_mflo | inst_jalr | inst_jal
                     | inst_lb | inst_lbu | inst_lh
-                    | inst_lhu | inst_lw;
+                    | inst_lhu | inst_lw | inst_jr;
                     // & ~(inst_sb | inst_sh | inst_sw);
 
 
@@ -480,7 +477,7 @@ module ID(
     // store in [rt] 
     assign sel_rf_dst[1] = inst_ori | inst_lui | inst_addiu
                         | inst_andi | inst_slti | inst_sltiu
-                        | inst_andi | inst_xori | inst_lb
+                        | inst_xori | inst_lb
                         | inst_lbu | inst_lh | inst_lhu
                         | inst_lw | inst_addi;
     // store in [31]
@@ -494,11 +491,11 @@ module ID(
     // 0 from alu_res ; 1 from ld_res
     /*  
         sel_rf_res:
-                决定寄存器文件的写回数据来源
-            用途:
-                在写回阶段选择不同的数据来源：
-                0：写回 ALU 的计算结果。
-                1：写回从数据存储器加载的数据（如 LW 指令）
+            决定寄存器文件的写回数据来源
+        用途:
+            在写回阶段选择不同的数据来源：
+            0：写回 ALU 的计算结果。
+            1：写回从数据存储器加载的数据（如 LW 指令）
     */
     assign sel_rf_res = inst_lw | inst_lb | inst_lbu | inst_lh
                         | inst_lhu | inst_sw | inst_sb | inst_sh
@@ -540,20 +537,22 @@ module ID(
 
     assign rs_eq_rt = (tdata1 == tdata2);
 
-    assign br_e = (inst_beq & rs_eq_rt) |
-              inst_jr |
-              inst_jalr |
-              inst_j |
-              inst_jal |
+    assign br_e = (inst_beq & rs_eq_rt) ||
+              inst_jr ||
+            //   inst_jalr ||
+              inst_jal ||
               (inst_bne & ~rs_eq_rt);
 
-    // assign br_e = (inst_beq & rs_eq_rt) ;
-    assign br_addr = inst_beq ? (pc_plus_4 + {{14{inst[15]}}, offset, 2'b0}) :
+    assign br_addr = inst_beq ? (pc_plus_4 + {{14{inst[15]}}, inst[15:0], 2'b0}) :
                  inst_jr  ? tdata1 :
                  inst_jal ? {pc_plus_4[31:28], instr_index, 2'b0} :
-                 inst_bne ? (pc_plus_4 + {{14{inst[15]}}, offset, 2'b0}) : 
-                 32'b0;
+                 inst_bne ? (pc_plus_4 + {{14{inst[15]}}, inst[15:0], 2'b0}) : 
+                //  inst_jalr ? tdata1 :
+                    32'b0;
 
+    // always @(posedge clk) begin
+    //     $display("tdata1: %h, tdata2: %h, rs_eq_rt: %h, PC: %h, bre: %h, br_addr: %h", tdata1, tdata2, rs_eq_rt, id_pc, br_e, br_addr);
+    // end
 
     assign br_bus = {
         br_e,
