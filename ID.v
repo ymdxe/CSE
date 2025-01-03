@@ -553,9 +553,9 @@ module ID(
     // assign re_gt_z = (tdata1 > 0);
     // assign re_le_z = (tdata1 <= 0);
     // assign re_lt_z = (tdata1 < 0);
-    assign rs_ge_z = (tdata1[31] == 1'b0);
+    assign rs_ge_z = (tdata1[31] == 1'b0) || (tdata1 == 32'h0);
     assign rs_gt_z = (tdata1[31] == 1'b0) && (tdata1 != 32'h0);
-    assign rs_le_z = (tdata1[31] == 1'b1);
+    assign rs_le_z = (tdata1[31] == 1'b1) || (tdata1 == 32'h0);
     assign rs_lt_z = (tdata1[31] == 1'b1) && (tdata1 != 32'h0);
 
 
