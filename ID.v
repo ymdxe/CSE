@@ -428,7 +428,7 @@ module ID(
 
     // TODO(0): 添加运算指令
     assign op_add = inst_addiu | inst_add | inst_addu | inst_addi | inst_jal | inst_lw | inst_sw |
-                    inst_bltzal | inst_bgezal
+                    inst_bltzal | inst_bgezal | inst_jalr
                     ;
     assign op_sub = inst_sub | inst_subu;
     assign op_slt = inst_slt | inst_slti;
@@ -486,7 +486,7 @@ module ID(
                         | inst_xor | inst_nor | inst_sll
                         | inst_srl | inst_sra | inst_sllv
                         | inst_srlv | inst_srav /*| inst_nop*/
-                        | inst_mfhi | inst_mflo | (inst_jalr & (rd != 0));
+                        | inst_mfhi | inst_mflo | (inst_jalr & (rd != 5'b0));
     // store in [rt] 
     assign sel_rf_dst[1] = inst_ori | inst_lui | inst_addiu
                         | inst_andi | inst_slti | inst_sltiu
@@ -494,7 +494,7 @@ module ID(
                         | inst_lbu | inst_lh | inst_lhu
                         | inst_lw | inst_addi;
     // store in [31]
-    assign sel_rf_dst[2] = inst_jal | inst_bltzal | inst_bgezal | (inst_jalr & (rd == 0));
+    assign sel_rf_dst[2] = inst_jal | inst_bltzal | inst_bgezal | (inst_jalr & (rd == 5'b0));
 
     // sel for regfile address
     assign rf_waddr = {5{sel_rf_dst[0]}} & rd 
@@ -560,7 +560,7 @@ module ID(
 
 
     assign br_e = (inst_beq & rs_eq_rt) || (inst_bne & ~rs_eq_rt) ||
-              inst_jr || inst_j || inst_jal || inst_jalr || 
+               inst_jr || inst_j || inst_jal || inst_jalr || 
               (inst_bgtz & rs_gt_z) || (inst_blez & rs_le_z) || (inst_bltz & rs_lt_z) ||
               (inst_bltzal & rs_lt_z) || (inst_bgez & rs_ge_z) || (inst_bgezal & rs_ge_z)
               
