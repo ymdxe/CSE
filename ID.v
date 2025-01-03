@@ -549,16 +549,20 @@ module ID(
     assign pc_plus_4 = id_pc + 32'h4;
 
     assign rs_eq_rt = (tdata1 == tdata2);
-    assign rs_ge_z = (tdata1 >= 0);
-    assign re_gt_z = (tdata1 > 0);
-    assign re_le_z = (tdata1 <= 0);
-    assign re_lt_z = (tdata1 < 0);
+    // assign rs_ge_z = (tdata1 >= 0);
+    // assign re_gt_z = (tdata1 > 0);
+    // assign re_le_z = (tdata1 <= 0);
+    // assign re_lt_z = (tdata1 < 0);
+    assign rs_ge_z = (tdata1[31] == 1'b0);
+    assign rs_gt_z = (tdata1[31] == 1'b0) && (tdata1 != 32'h0);
+    assign rs_le_z = (tdata1[31] == 1'b1);
+    assign rs_lt_z = (tdata1[31] == 1'b1) && (tdata1 != 32'h0);
 
 
     assign br_e = (inst_beq & rs_eq_rt) || (inst_bne & ~rs_eq_rt) ||
               inst_jr || inst_j || inst_jal || inst_jalr || 
-              (inst_bgtz & re_gt_z) || (inst_blez & re_le_z) || (inst_bltz & re_lt_z) ||
-              (inst_bltzal & re_lt_z) || (inst_bgez & rs_ge_z) || (inst_bgezal & rs_ge_z)
+              (inst_bgtz & rs_gt_z) || (inst_blez & rs_le_z) || (inst_bltz & rs_lt_z) ||
+              (inst_bltzal & rs_lt_z) || (inst_bgez & rs_ge_z) || (inst_bgezal & rs_ge_z)
               
               ;
 
