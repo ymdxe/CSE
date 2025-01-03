@@ -165,8 +165,8 @@ module EX(
 
     // TODO (2): 进行暂停处理
     // assign stall[2] = inst_lb | inst_lh | inst_lw | inst_lbu | inst_lhu ? `Stop : `NoStop;
-    // assign ex_find_load = (inst_lb | inst_lh | inst_lw | inst_lbu | inst_lhu) ? `Stop : `NoStop;
-    assign ex_find_load = sel_rf_res;
+    assign ex_find_load = (inst_lb | inst_lh | inst_lw | inst_lbu | inst_lhu) ? `Stop : `NoStop;
+    // assign ex_find_load = sel_rf_res;
 
     assign data_ram_sel = inst_sb | inst_lb | inst_lbu ? byte_sel :
                           inst_sh | inst_lh | inst_lhu ?  {{2{byte_sel[2]}},{2{byte_sel[0]}}} :

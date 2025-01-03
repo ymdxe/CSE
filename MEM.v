@@ -136,8 +136,6 @@ module MEM(
                         inst_lh ? {{16{h_data[15]}},h_data} :
                         inst_lhu ? {{16{1'b0}},h_data} :
                         inst_lw ? w_data : 32'b0; 
-
-    // assign mem_result = data_ram_en ? data_sram_rdata : 32'b0;
     // *******************************************************************^
 
     // assign rf_wdata = sel_rf_res ? mem_result : ex_result;

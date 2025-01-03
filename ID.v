@@ -98,7 +98,8 @@ module ID(
         // end
     end
     
-    assign inst = ce ? is_slot ? slot : inst_sram_rdata : 32'b0; // 从内存中取出的指令
+    // assign inst = ce ? is_slot ? slot : inst_sram_rdata : 32'b0; // 从内存中取出的指令
+    assign inst = is_slot ? slot : inst_sram_rdata; // 从内存中取出的指令
 
     assign {
         ce,
@@ -445,9 +446,6 @@ module ID(
     //                         inst_sw ? 4'b1111 :  // sw: 写4个字节
     //                         4'b0000);            // 默认不写
     assign data_ram_wen = inst_sw ? 4'b1111 : 4'b0000;
-    // assign data_ram_sel = inst_sb | inst_lb | inst_lbu ? byte_sel :
-    //                     inst_sh | inst_lh | inst_lhu ?  {{2{byte_sel[2]}},{2{byte_sel[0]}}} :
-    //                     inst_sw | inst_lw ? 4'b1111 : 4'b0000;
 
     // regfile store enable
     assign rf_we = inst_ori | inst_lui | inst_addiu
@@ -458,10 +456,11 @@ module ID(
                     | inst_and | inst_nor | inst_or
                     | inst_xor | inst_sll | inst_srl
                     | inst_sra | inst_sllv | inst_srlv
-                    | inst_srav | inst_mfhi
+                    | inst_srav | inst_mfhi | inst_andi
                     | inst_mflo | inst_jalr | inst_jal
                     | inst_lb | inst_lbu | inst_lh
-                    | inst_lhu | inst_lw | inst_jr;
+                    | inst_lhu | inst_lw | inst_jr
+                    | inst_xori;
                     // & ~(inst_sb | inst_sh | inst_sw);
 
 
@@ -546,8 +545,8 @@ module ID(
     assign br_addr = inst_beq ? (pc_plus_4 + {{14{inst[15]}}, inst[15:0], 2'b0}) :
                  inst_jr  ? tdata1 :
                  inst_jal ? {pc_plus_4[31:28], instr_index, 2'b0} :
-                 inst_bne ? (pc_plus_4 + {{14{inst[15]}}, inst[15:0], 2'b0}) : 
                  inst_j ?  ({ pc_plus_4[31:28], inst[25:0], 2'b0}) :
+                 inst_bne ? (pc_plus_4 + {{14{inst[15]}}, inst[15:0], 2'b0}) : 
                     32'b0;
 
     // always @(posedge clk) begin
