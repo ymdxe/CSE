@@ -125,27 +125,6 @@ module EX(
         .out    (byte_sel         )
     );
 
-    reg [`LOAD_SRAM_DATA_WD-1:0] load_sram_id_data_r;
-    reg [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data_r;    
-
-    // always @ (posedge clk) begin
-    //     if (rst) begin
-    //         load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
-    //         store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
-    //     end
-    //     // else if (flush) begin
-    //     //     id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
-    //     // end
-    //     else if (stall[2]==`Stop && stall[3]==`NoStop) begin
-    //         load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
-    //         store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
-    //     end
-    //     else if (stall[2]==`NoStop) begin
-    //         load_sram_id_data_r <= load_sram_id_data;
-    //         store_sram_id_data_r <= store_sram_id_data;
-    //     end
-    // end
-
     wire inst_sb, inst_sh, inst_sw;
     wire inst_lb, inst_lh, inst_lw, inst_lbu, inst_lhu;
 
