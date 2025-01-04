@@ -10,6 +10,8 @@
 `define MEM_TO_ID_WD 38              //增加MEM_to_RF，处理数据相关
 `define LOAD_SRAM_DATA_WD 5          // 增加LOAD_SRAM_DATA_WD，进行内存操作
 `define STORE_SRAM_DATA_WD 3         // 增加STORE_SRAM_DATA_WD，进行内存操作
+`define ID_HILO_EX_WD 72                // 增加ID_HILO_WD，处理HILO寄存器
+`define EX_HILO_ID_WD 66               // 增加ID_TO_RF_WD，处理数据相关
 
 `define StallBus 6
 `define NoStop 1'b0

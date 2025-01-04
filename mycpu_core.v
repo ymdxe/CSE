@@ -39,6 +39,8 @@ module mycpu_core(
     wire stallreq_for_load;
     wire ex_find_load;
     wire [3:0] data_ram_sel;
+    wire [`ID_HILO_EX_WD-1:0] id_hilo_ex_bus;
+    wire [`EX_HILO_ID_WD-1:0] ex_hilo_id_bus;
 
     IF u_IF(
     	.clk             (clk             ),
@@ -66,6 +68,8 @@ module mycpu_core(
         .load_sram_id_data  (load_sram_id_data  ), //
         .store_sram_id_data (store_sram_id_data ), //
         .ex_find_load       (ex_find_load), // 添加load暂停
+        .id_hilo_ex_bus     (id_hilo_ex_bus ),
+        .ex_hilo_id_bus     (ex_hilo_id_bus ),
         .stallreq_for_load  (stallreq_for_load),
         .id_to_ex_bus       (id_to_ex_bus    ),
         .br_bus             (br_bus          )
@@ -83,6 +87,8 @@ module mycpu_core(
         .load_sram_ex_data      (load_sram_ex_data  ), //
         .store_sram_ex_data     (store_sram_ex_data ),  //
         .ex_find_load           (ex_find_load), // 添加load暂停
+        .id_hilo_ex_bus         (id_hilo_ex_bus ),
+        .ex_hilo_id_bus         (ex_hilo_id_bus ),
         .data_ram_sel           (data_ram_sel    ),
         .data_sram_en           (data_sram_en    ),
         .data_sram_wen          (data_sram_wen   ),

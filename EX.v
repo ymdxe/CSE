@@ -22,6 +22,10 @@ module EX(
     // TODO (3): 处理load相关
     output wire [3:0] data_ram_sel, // 选择写入内存的字节
 
+    // TODO (4): hilo
+    input wire [`ID_HILO_EX_WD-1:0] id_hilo_ex_bus,
+    output wire [`EX_HILO_ID_WD-1:0] ex_hilo_id_bus,
+
     output wire data_sram_en,
     output wire [3:0] data_sram_wen,
     output wire [31:0] data_sram_addr,
@@ -34,12 +38,14 @@ module EX(
     // ? 为什么在上升沿的时候赋值，而不是定义成wire类型在顶层模块进行赋值
     //  如果直接用 wire，信号在组合逻辑的传播过程中可能会产生毛刺（瞬态的高低电平波动），导致下一级电路误触发
     reg [`ID_TO_EX_WD-1:0] id_to_ex_bus_r;    
+    reg [`ID_HILO_EX_WD-1:0] id_hilo_ex_bus_r;
 
     always @ (posedge clk) begin
         if (rst) begin
             id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
             load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
             store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
+            id_hilo_ex_bus_r <= `ID_HILO_EX_WD'b0;
         end
         // else if (flush) begin
         //     id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
@@ -48,12 +54,13 @@ module EX(
             id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
             load_sram_id_data_r <= `LOAD_SRAM_DATA_WD'b0;
             store_sram_id_data_r <= `STORE_SRAM_DATA_WD'b0;
-
+            id_hilo_ex_bus_r <= `ID_HILO_EX_WD'b0;
         end
         else if (stall[2]==`NoStop) begin
             id_to_ex_bus_r <= id_to_ex_bus;
             load_sram_id_data_r <= load_sram_id_data;
             store_sram_id_data_r <= store_sram_id_data;
+            id_hilo_ex_bus_r <= id_hilo_ex_bus;
         end
     end
 
@@ -112,8 +119,6 @@ module EX(
         .alu_src2    (alu_src2    ),
         .alu_result  (alu_result  )
     );
-
-    assign ex_result = alu_result;
 
     // ********************************************************************************************
     // TODO (2): 更改sram信息
@@ -198,6 +203,38 @@ module EX(
     //     $display("data_sram_wen = %h", data_sram_wen);
     // end
 
+    // HILO part
+    wire inst_mfhi, inst_mflo, inst_mthi, inst_mtlo;
+    wire inst_mult, inst_multu, inst_div_u, inst_divu_u;
+
+    wire [31:0] hi_data, lo_data, hi_wdata, lo_wdata;
+    wire hi_we, lo_we;
+
+
+    assign {
+        inst_mfhi,
+        inst_mflo,
+        inst_mthi,
+        inst_mtlo,
+        inst_mult,
+        inst_multu,
+        inst_div_u,
+        inst_divu_u,
+        hi_data,
+        lo_data
+    } = id_hilo_ex_bus_r;
+
+    assign ex_hilo_id_bus = {
+        hi_we,
+        lo_we,
+        hi_wdata,
+        lo_wdata
+    };
+
+    assign ex_result =  inst_mfhi ? hi_data :
+                        inst_mflo ? lo_data :
+                        alu_result;
+
     assign ex_to_mem_bus = {
         ex_pc,          // 75:44
         data_ram_en,    // 43
@@ -205,18 +242,17 @@ module EX(
         sel_rf_res,     // 38
         rf_we,          // 37       是否写回寄存器
         rf_waddr,       // 36:32    写回寄存器地址
-        ex_result       // 31:0     ALU计算结果
+        ex_result       // 31:0     
     };
-
-
-
     // MUL part
     wire [63:0] mul_result;
     wire mul_signed; // 有符号乘法标记
 
     // TODO (0): 增加乘法源操作数
     wire [31:0] mul_opdata1, mul_opdata2;
-
+    assign mul_opdata1 = rf_rdata1;
+    assign mul_opdata2 = rf_rdata2;
+    assign mul_signed = inst_mult;
 
     mul u_mul(
     	.clk        (clk            ),
@@ -319,6 +355,17 @@ module EX(
     end
 
     // mul_result 和 div_result 可以直接使用
-    
+
+    assign hi_we = inst_mthi | inst_mult | inst_multu | inst_div_u | inst_divu_u;
+    assign lo_we = inst_mtlo | inst_mult | inst_multu | inst_div_u | inst_divu_u;
+
+    assign hi_wdata = inst_mthi ? rf_rdata1 :
+                      inst_mult | inst_multu ? mul_result[63:32] :
+                      inst_div_u | inst_divu_u ? div_result[63:32] :
+                      32'b0;
+    assign lo_wdata = inst_mtlo ? rf_rdata1 :
+                      inst_mult | inst_multu ? mul_result[31:0] :
+                      inst_div_u | inst_divu_u ? div_result[31:0] :
+                      32'b0;
     
 endmodule

@@ -17,10 +17,7 @@ module CTRL(
         stall[5]表示流水线回写阶段是否暂停，为1表示暂停
     */
     always @ (*) begin
-        if (rst) begin
-            stall = `StallBus'b0;
-        end
-        else if (stallreq_for_load) begin
+        if (stallreq_for_load) begin
             stall = `StallBus'b00_0111; // 将译码往前阶段都进行暂停
         end
         else begin

@@ -25,9 +25,13 @@ module ID(
     output wire [`STORE_SRAM_DATA_WD-1:0] store_sram_id_data,
     // **********************************************^
 
-    // 处理load相关
+    // TODO(3): 处理load相关
     input wire ex_find_load,
     output wire stallreq_for_load,
+
+    // TODO(4): hilo
+    output wire [`ID_HILO_EX_WD-1:0] id_hilo_ex_bus,
+    input wire [`EX_HILO_ID_WD-1:0] ex_hilo_id_bus,
 
     output wire [`ID_TO_EX_WD-1:0] id_to_ex_bus,
 
@@ -208,7 +212,7 @@ module ID(
     // TODO (3): hi, lo 寄存器
     // 算数运算指令
     wire inst_add, inst_addi, inst_addiu, inst_addu, inst_sub, inst_subu;
-    wire inst_slt, inst_slti, inst_sltiu, inst_sltu, inst_mul, inst_mult, inst_multu;
+    wire inst_slt, inst_slti, inst_sltiu, inst_sltu, inst_mul, inst_mult, inst_multu, inst_div, inst_divu;
     
     // 逻辑运算指令
     wire inst_and, inst_nor, inst_ori, inst_xor, inst_andi, inst_or, inst_xori, inst_lui;
@@ -290,6 +294,8 @@ module ID(
     assign inst_mul     = op_d[6'b01_1100] & func_d[6'b00_0010];
     assign inst_mult    = op_d[6'b00_0000] & func_d[6'b01_1000];
     assign inst_multu   = op_d[6'b00_0000] & func_d[6'b01_1001];
+    assign inst_div     = op_d[6'b00_0000] & func_d[6'b01_1010];
+    assign inst_divu    = op_d[6'b00_0000] & func_d[6'b01_1011];
 
     // 逻辑运算指令
     assign inst_and     = op_d[6'b00_0000] & func_d[6'b10_0100];
@@ -389,6 +395,7 @@ module ID(
                             | inst_sb | inst_sh | inst_sw
                             | inst_bgtz | inst_blez | inst_bltz
                             | inst_bltzal | inst_bgez | inst_bgezal
+                            | inst_div | inst_divu
                             ;
 
     // pc to reg1
@@ -408,6 +415,7 @@ module ID(
                             | inst_sltu 
                             | inst_mul
                             | inst_mult | inst_multu
+                            | inst_div | inst_divu
                             // | inst_nop
                             ;
     
@@ -588,7 +596,43 @@ module ID(
         br_e,
         br_addr
     };
-    
 
+    
+    wire [31:0] hi_data, lo_data, hi_rdata, lo_rdata, hi_wdata, lo_wdata;
+    wire hi_rf_we, lo_rf_we;
+
+    assign {
+        hi_rf_we,
+        lo_rf_we,
+        hi_wdata,
+        lo_wdata
+    } = ex_hilo_id_bus;
+
+    hilo_reg u_hilo_reg(
+        .clk        (clk),
+        // .rst        (rst),
+        .hi_we      (hi_rf_we),
+        .lo_we      (lo_rf_we),
+        .hi_in      (hi_wdata),
+        .lo_in      (lo_wdata),
+        .hi_out     (hi_rdata),
+        .lo_out     (lo_rdata)
+    );
+
+    assign hi_data = hi_rf_we ? hi_wdata : hi_rdata;
+    assign lo_data = lo_rf_we ? lo_wdata : lo_rdata;
+
+    assign id_hilo_ex_bus = {
+        inst_mfhi,
+        inst_mflo,
+        inst_mthi,
+        inst_mtlo,
+        inst_mult,
+        inst_multu,
+        inst_div,
+        inst_divu,
+        hi_data,
+        lo_data
+    };
 
 endmodule

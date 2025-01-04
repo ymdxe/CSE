@@ -1,10 +1,12 @@
 `include "lib/defines.vh"
+
 module hilo_reg (
-    input wire rst,
+    // input wire rst,
     input wire clk,
     
     // 写端口
-    input wire we,
+    input wire hi_we,
+    input wire lo_we,
     input wire [31:0] hi_in,
     input wire [31:0] lo_in,
 
@@ -13,22 +15,24 @@ module hilo_reg (
     output wire [31:0] lo_out
 );
 
-    reg [31:0] HI; // HI寄存器
-    reg [31:0] LO; // LO寄存器
+    reg [31:0] HI_REG; // HI寄存器
+    reg [31:0] LO_REG; // LO寄存器
 
     always @ (posedge clk) begin
-        if (rst) begin
-            HI <= 32'b0;
-            LO <= 32'b0;
+        if (hi_we & lo_we) begin
+            HI_REG <= hi_in;
+            LO_REG <= lo_in;
         end
-        else if (we) begin
-            HI <= hi_in;
-            LO <= lo_in;
+        else if (hi_we) begin
+            HI_REG <= hi_in;
+        end
+        else if (lo_we) begin
+            LO_REG <= lo_in;
         end
     end
 
-    assign hi_out = HI;
-    assign lo_out = LO;
+    assign hi_out = HI_REG;
+    assign lo_out = LO_REG;
     // HILO寄存器读取逻辑
     // always @(posedge clk) begin
     //     hi_out <= HI; 
