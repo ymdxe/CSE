@@ -25,12 +25,14 @@ module MEM(
     reg [`EX_TO_MEM_WD-1:0] ex_to_mem_bus_r;
     reg [`LOAD_SRAM_DATA_WD-1:0] load_sram_ex_data_r;
     reg [`STORE_SRAM_DATA_WD-1:0] store_sram_ex_data_r;  
+    reg [3:0] data_ram_sel_r;
 
     always @ (posedge clk) begin
         if (rst) begin
             ex_to_mem_bus_r <= `EX_TO_MEM_WD'b0;
             load_sram_ex_data_r <= `LOAD_SRAM_DATA_WD'b0;
             store_sram_ex_data_r <= `STORE_SRAM_DATA_WD'b0;
+            data_ram_sel_r <= 4'b0;
         end
         // else if (flush) begin
         //     ex_to_mem_bus_r <= `EX_TO_MEM_WD'b0;
@@ -39,11 +41,13 @@ module MEM(
             ex_to_mem_bus_r <= `EX_TO_MEM_WD'b0;
             load_sram_ex_data_r <= `LOAD_SRAM_DATA_WD'b0;
             store_sram_ex_data_r <= `STORE_SRAM_DATA_WD'b0;
+            data_ram_sel_r <= 4'b0;
         end
         else if (stall[3]==`NoStop) begin
             ex_to_mem_bus_r <= ex_to_mem_bus;
             load_sram_ex_data_r <= load_sram_ex_data;
             store_sram_ex_data_r <= store_sram_ex_data;
+            data_ram_sel_r <= data_ram_sel;
         end
     end
 
@@ -73,27 +77,6 @@ module MEM(
     // *******************************************************************
     // TODO (2): 完成数据存储器的读写操作
 
-    // reg [`LOAD_SRAM_DATA_WD-1:0] load_sram_ex_data_r;
-    // reg [`STORE_SRAM_DATA_WD-1:0] store_sram_ex_data_r;    
-
-    // always @ (posedge clk) begin
-    //     if (rst) begin
-    //         load_sram_ex_data_r <= `LOAD_SRAM_DATA_WD'b0;
-    //         store_sram_ex_data_r <= `STORE_SRAM_DATA_WD'b0;
-    //     end
-    //     // else if (flush) begin
-    //     //     id_to_ex_bus_r <= `ID_TO_EX_WD'b0;
-    //     // end
-    //     else if (stall[2]==`Stop && stall[3]==`NoStop) begin
-    //         load_sram_ex_data_r <= `LOAD_SRAM_DATA_WD'b0;
-    //         store_sram_ex_data_r <= `STORE_SRAM_DATA_WD'b0;
-    //     end
-    //     else if (stall[2]==`NoStop) begin
-    //         load_sram_ex_data_r <= load_sram_ex_data;
-    //         store_sram_ex_data_r <= store_sram_ex_data;
-    //     end
-    // end
-
     wire inst_sb, inst_sh, inst_sw;
     wire inst_lb, inst_lh, inst_lw, inst_lbu, inst_lhu;
 
@@ -119,18 +102,12 @@ module MEM(
     //     $display("data_ram_en = %h, data_ram_wen = %h", data_ram_en, data_ram_wen);
     // end
 
-    // assign b_data = data_ram_wen[3] ? data_sram_rdata[31:24] : 
-    //                 data_ram_wen[2] ? data_sram_rdata[23:16] :
-    //                 data_ram_wen[1] ? data_sram_rdata[15: 8] : 
-    //                 data_ram_wen[0] ? data_sram_rdata[ 7: 0] : 8'b0;
-    // assign h_data = data_ram_wen[2] ? data_sram_rdata[31:16] :
-    //                 data_ram_wen[0] ? data_sram_rdata[15: 0] : 16'b0;
-    assign b_data = data_ram_sel[3] ? data_sram_rdata[31:24] : 
-                    data_ram_sel[2] ? data_sram_rdata[23:16] :
-                    data_ram_sel[1] ? data_sram_rdata[15: 8] : 
-                    data_ram_sel[0] ? data_sram_rdata[ 7: 0] : 8'b0;
-    assign h_data = data_ram_sel[2] ? data_sram_rdata[31:16] :
-                    data_ram_sel[0] ? data_sram_rdata[15: 0] : 16'b0;
+    assign b_data = data_ram_sel_r[3] ? data_sram_rdata[31:24] : 
+                    data_ram_sel_r[2] ? data_sram_rdata[23:16] :
+                    data_ram_sel_r[1] ? data_sram_rdata[15: 8] : 
+                    data_ram_sel_r[0] ? data_sram_rdata[ 7: 0] : 8'b0;
+    assign h_data = data_ram_sel_r[2] ? data_sram_rdata[31:16] :
+                    data_ram_sel_r[0] ? data_sram_rdata[15: 0] : 16'b0;
     assign w_data = data_sram_rdata;
 
     assign mem_result = inst_lb ? {{24{b_data[7]}},b_data} :

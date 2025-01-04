@@ -157,19 +157,20 @@ module EX(
                           inst_sh | inst_lh | inst_lhu ?  {{2{byte_sel[2]}},{2{byte_sel[0]}}} :
                           inst_sw | inst_lw ? 4'b1111 : 4'b0000;
     assign data_sram_en = data_ram_en;
-    // assign data_sram_wen = {{data_ram_wen}} & data_ram_sel;
-    assign data_sram_wen = inst_sw ? 4'b1111:
-                    inst_sb & alu_result[1:0]==2'b00 ? 4'b0001:
-                    inst_sb & alu_result[1:0]==2'b01 ? 4'b0010:
-                    inst_sb & alu_result[1:0]==2'b10 ? 4'b0100:
-                    inst_sb & alu_result[1:0]==2'b11 ? 4'b1000:
-                    inst_sh & alu_result[1:0]==2'b00 ? 4'b0011:
-                    inst_sh & alu_result[1:0]==2'b10 ? 4'b1100:
-                    4'b0000;
+    assign data_sram_wen = {4{data_ram_wen}} & data_ram_sel;
+    // assign data_sram_wen = inst_sw ? 4'b1111:
+    //                 inst_sb & alu_result[1:0]==2'b00 ? 4'b0001:
+    //                 inst_sb & alu_result[1:0]==2'b01 ? 4'b0010:
+    //                 inst_sb & alu_result[1:0]==2'b10 ? 4'b0100:
+    //                 inst_sb & alu_result[1:0]==2'b11 ? 4'b1000:
+    //                 inst_sh & alu_result[1:0]==2'b00 ? 4'b0011:
+    //                 inst_sh & alu_result[1:0]==2'b10 ? 4'b1100:
+    //                 4'b0000;
     assign data_sram_addr = ex_result;
     assign data_sram_wdata = inst_sb ? {4{rf_rdata2[7:0]}} :        // 字节
                              inst_sh ? {2{rf_rdata2[15:0]}} :       // 半字
-                             inst_sw ? rf_rdata2 : 32'b0;           // 字
+                            //  inst_sw ? 
+                             rf_rdata2;           // 字
 
     assign load_sram_ex_data = {
         inst_lb,
@@ -199,7 +200,7 @@ module EX(
     // WB_TO_ID part
     // *****************************************************^
 
-    assign data_ram_wen = data_sram_wen;
+    // assign data_ram_wen = data_sram_wen;
     // always @ (posedge clk) begin
     //     $display("data_sram_wen = %h", data_sram_wen);
     // end

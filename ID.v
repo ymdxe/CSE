@@ -423,7 +423,8 @@ module ID(
     assign sel_alu_src2[1] = inst_lui | inst_addiu | inst_addi
                             | inst_slti | inst_sltiu
                             | inst_lb | inst_lbu | inst_lh
-                            | inst_lhu | inst_lw | inst_sw;
+                            | inst_lhu | inst_lw | inst_sw
+                            | inst_sb | inst_sh;
 
     // 32'b8 to reg2
     assign sel_alu_src2[2] = inst_jal | inst_bltzal | inst_bgezal | inst_jalr;
@@ -436,7 +437,8 @@ module ID(
 
     // TODO(0): 添加运算指令
     assign op_add = inst_addiu | inst_add | inst_addu | inst_addi | inst_jal | inst_lw | inst_sw |
-                    inst_bltzal | inst_bgezal | inst_jalr
+                    inst_bltzal | inst_bgezal | inst_jalr | inst_lb | inst_lbu | inst_lh | inst_lhu
+                    | inst_sb | inst_sh
                     ;
     assign op_sub = inst_sub | inst_subu;
     assign op_slt = inst_slt | inst_slti;
@@ -466,7 +468,7 @@ module ID(
     //                         inst_sh ? 4'b0011 :  // sh: 写2个字节
     //                         inst_sw ? 4'b1111 :  // sw: 写4个字节
     //                         4'b0000);            // 默认不写
-    assign data_ram_wen = inst_sw ? 4'b1111 : 4'b0000;
+    assign data_ram_wen = inst_sw | inst_sb | inst_sh ? 4'b1111 : 4'b0000;
 
     // regfile store enable
     assign rf_we = inst_ori | inst_lui | inst_addiu
