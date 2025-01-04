@@ -259,8 +259,8 @@ module EX(
     	.clk        (clk            ),
         .resetn     (~rst           ),
         .mul_signed (mul_signed     ),
-        .ina        (mul_opdata1    ), // 乘法源操作数1
-        .inb        (mul_opdata2    ), // 乘法源操作数2
+        .ina        (rf_rdata1    ), // 乘法源操作数1
+        .inb        (rf_rdata2    ), // 乘法源操作数2
         .result     (mul_result     ) // 乘法结果 64bit
     );
 
@@ -269,7 +269,6 @@ module EX(
     wire inst_div, inst_divu;
     wire div_ready_i;
     reg stallreq_for_div;
-    assign stallreq_for_ex = stallreq_for_div;
 
     reg [31:0] div_opdata1_o;
     reg [31:0] div_opdata2_o;
@@ -302,7 +301,7 @@ module EX(
             div_opdata2_o = `ZeroWord;
             div_start_o = `DivStop;
             signed_div_o = 1'b0;
-            case ({inst_div,inst_divu})
+            case ({inst_div_u,inst_divu_u})
                 2'b10:begin
                     if (div_ready_i == `DivResultNotReady) begin
                         div_opdata1_o = rf_rdata1;
@@ -356,6 +355,7 @@ module EX(
     end
 
     // mul_result 和 div_result 可以直接使用
+    assign stallreq_for_ex = stallreq_for_div;
 
     assign hi_we = inst_mthi | inst_mult | inst_multu | inst_div_u | inst_divu_u;
     assign lo_we = inst_mtlo | inst_mult | inst_multu | inst_div_u | inst_divu_u;

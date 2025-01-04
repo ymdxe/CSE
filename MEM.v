@@ -57,6 +57,8 @@ module MEM(
     wire [31:0] ex_result;
     wire [31:0] mem_result;
 
+    assign data_ram_wen = data_ram_sel;
+
     assign {
         mem_pc,         // 75:44
         data_ram_en,    // 43
