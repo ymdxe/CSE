@@ -1,7 +1,7 @@
 `include "lib/defines.vh"
 module CTRL(
     input wire rst,
-    // input wire stallreq_for_ex,
+    input wire stallreq_for_ex,
     input wire stallreq_for_load,
 
     // output reg flush,
@@ -19,6 +19,9 @@ module CTRL(
     always @ (*) begin
         if (stallreq_for_load) begin
             stall = `StallBus'b00_0111; // 将译码往前阶段都进行暂停
+        end
+        else if (stallreq_for_ex) begin
+            stall = `StallBus'b00_1111; // 将执行往前阶段都进行暂停
         end
         else begin
             stall = `StallBus'b0;

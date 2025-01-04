@@ -25,6 +25,7 @@ module EX(
     // TODO (4): hilo
     input wire [`ID_HILO_EX_WD-1:0] id_hilo_ex_bus,
     output wire [`EX_HILO_ID_WD-1:0] ex_hilo_id_bus,
+    output wire stallreq_for_ex,  // 除法暂停
 
     output wire data_sram_en,
     output wire [3:0] data_sram_wen,
