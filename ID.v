@@ -5,7 +5,7 @@ module ID(
     // input wire flush,
     input wire [`StallBus-1:0] stall,
     
-    output wire stallreq,                   // 暂时不用
+    // output wire stall1req,                   // 暂时不用
 
     input wire [`IF_TO_ID_WD-1:0] if_to_id_bus,
 
@@ -91,15 +91,12 @@ module ID(
         else if (stall[1]==`NoStop) begin
             if_to_id_bus_r <= if_to_id_bus;
             is_slot <= 1'b0;
-            // slot <= 32'b0;
         end
         else if ((stall[2:1] == 2'b11) && (is_slot == 1'b0)) begin
             is_slot <= 1'b1;
             slot <= inst_sram_rdata;
         end
-        // else begin
-        //     if_to_id_bus_r <= `IF_TO_ID_WD'b0;
-        // end
+        
     end
     
     // assign inst = ce ? is_slot ? slot : inst_sram_rdata : 32'b0; // 从内存中取出的指令
@@ -218,9 +215,6 @@ module ID(
     wire inst_and, inst_nor, inst_ori, inst_xor, inst_andi, inst_or, inst_xori, inst_lui;
     
     // 逻辑移动指令, 参照sa（移位位数）
-    /*
-        nop:空指令，和sll等价
-    */
     wire inst_sll, inst_srl, inst_sra, inst_sllv, inst_srlv, inst_srav;
     //  inst_nop;
 
@@ -289,8 +283,6 @@ module ID(
     assign inst_addi    = op_d[6'b00_1000];
     assign inst_slti    = op_d[6'b00_1010];
     assign inst_sltiu   = op_d[6'b00_1011];
-    // assign inst_clo     = op_d[6'b01_1100] & func_d[6'b10_0000];
-    // assign inst_clz     = op_d[6'b01_1100] & func_d[6'b10_0001];
     assign inst_mul     = op_d[6'b01_1100] & func_d[6'b00_0010];
     assign inst_mult    = op_d[6'b00_0000] & func_d[6'b01_1000];
     assign inst_multu   = op_d[6'b00_0000] & func_d[6'b01_1001];
@@ -612,7 +604,7 @@ module ID(
 
     hilo_reg u_hilo_reg(
         .clk        (clk),
-        // .rst        (rst),
+        .rst        (rst),
         .hi_we      (hi_rf_we),
         .lo_we      (lo_rf_we),
         .hi_in      (hi_wdata),

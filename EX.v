@@ -149,23 +149,14 @@ module EX(
     } = load_sram_id_data_r;
 
     // TODO (2): 进行暂停处理
-    // assign stall[2] = inst_lb | inst_lh | inst_lw | inst_lbu | inst_lhu ? `Stop : `NoStop;
     assign ex_find_load = (inst_lb | inst_lh | inst_lw | inst_lbu | inst_lhu) ? `Stop : `NoStop;
-    // assign ex_find_load = sel_rf_res;
 
     assign data_ram_sel = inst_sb | inst_lb | inst_lbu ? byte_sel :
                           inst_sh | inst_lh | inst_lhu ?  {{2{byte_sel[2]}},{2{byte_sel[0]}}} :
                           inst_sw | inst_lw ? 4'b1111 : 4'b0000;
     assign data_sram_en = data_ram_en;
-    assign data_sram_wen = {4{data_ram_wen}} & data_ram_sel;
-    // assign data_sram_wen = inst_sw ? 4'b1111:
-    //                 inst_sb & alu_result[1:0]==2'b00 ? 4'b0001:
-    //                 inst_sb & alu_result[1:0]==2'b01 ? 4'b0010:
-    //                 inst_sb & alu_result[1:0]==2'b10 ? 4'b0100:
-    //                 inst_sb & alu_result[1:0]==2'b11 ? 4'b1000:
-    //                 inst_sh & alu_result[1:0]==2'b00 ? 4'b0011:
-    //                 inst_sh & alu_result[1:0]==2'b10 ? 4'b1100:
-    //                 4'b0000;
+    assign data_sram_wen = {4{data_ram_wen}} & data_ram_sel; // ?
+
     assign data_sram_addr = ex_result;
     assign data_sram_wdata = inst_sb ? {4{rf_rdata2[7:0]}} :        // 字节
                              inst_sh ? {2{rf_rdata2[15:0]}} :       // 半字

@@ -33,11 +33,6 @@ module hilo_reg (
 
     assign hi_out = HI_REG;
     assign lo_out = LO_REG;
-    // HILO寄存器读取逻辑
-    // always @(posedge clk) begin
-    //     hi_out <= HI; 
-    //     lo_out <= LO; 
-    // end
 
 
 endmodule

@@ -102,6 +102,7 @@ module MEM(
     //     $display("data_ram_en = %h, data_ram_wen = %h", data_ram_en, data_ram_wen);
     // end
 
+    // 半字选择是看后两位和前两位
     assign b_data = data_ram_sel_r[3] ? data_sram_rdata[31:24] : 
                     data_ram_sel_r[2] ? data_sram_rdata[23:16] :
                     data_ram_sel_r[1] ? data_sram_rdata[15: 8] : 
@@ -110,15 +111,16 @@ module MEM(
                     data_ram_sel_r[0] ? data_sram_rdata[15: 0] : 16'b0;
     assign w_data = data_sram_rdata;
 
-    assign mem_result = inst_lb ? {{24{b_data[7]}},b_data} :
-                        inst_lbu ? {{24{1'b0}},b_data} :
-                        inst_lh ? {{16{h_data[15]}},h_data} :
-                        inst_lhu ? {{16{1'b0}},h_data} :
-                        inst_lw ? w_data : 32'b0; 
+    assign mem_result = inst_lb  ? {{24{b_data[7]}}, b_data} :
+                        inst_lbu ? {{24{1'b0     }}, b_data} :
+                        inst_lh  ? {{16{h_data[15]}},h_data} :
+                        inst_lhu ? {{16{1'b0      }},h_data} :
+                        inst_lw  ? w_data : 32'b0; 
     // *******************************************************************^
 
     // assign rf_wdata = sel_rf_res ? mem_result : ex_result;
     assign rf_wdata = sel_rf_res & data_ram_en ? mem_result : ex_result;
+
     // always @ (posedge clk) begin
     //     $display("rf_wdata = %h, mem_result = %h, inst_lw = %h, w_data = %h", rf_wdata, mem_result, load_sram_ex_data_r, w_data);
     // end
